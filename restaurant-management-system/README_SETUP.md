@@ -19,6 +19,22 @@ php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvid
 php artisan migrate
 ```
 
+If you prefer MySQL (recommended for production / course environment) instead of the default SQLite, create a database first and update `.env` accordingly. Example (PowerShell / local):
+
+```powershell
+# create a local mysql database (example using MySQL client)
+# mysql -u root -p -e "CREATE DATABASE laravel;"
+
+# then update .env values (or copy .env.example which now defaults to MySQL)
+copy .env.example .env
+php artisan key:generate
+
+# run migrations
+php artisan migrate
+```
+
+If you keep using SQLite for quick local testing, revert `DB_CONNECTION=sqlite` and ensure `database/database.sqlite` exists.
+
 3. Update `.env`
 
 - Add your app domain(s) to `SANCTUM_STATEFUL_DOMAINS`, e.g. `localhost,127.0.0.1`.
@@ -49,6 +65,3 @@ git commit -m "Initial project setup with file structure"
 
 Notes:
 - The `config/sanctum.php` and `config/permission.php` files are placeholders to help you configure Sanctum and Spatie permission after installing packages.
-- I also created empty scaffolding directories so subsequent commits can add Jobs, Notifications, Policies, Services, and Observers in focused patches.
-
-If you want, I can now scaffold the migrations for roles and core domain tables for the next small commit.
