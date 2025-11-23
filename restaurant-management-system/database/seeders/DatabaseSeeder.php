@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Database\Seeders\RolesSeeder;
@@ -15,10 +16,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed roles and admin user (reads ADMIN_* from .env)
+        // Seed roles, admin user, and demo data (reads ADMIN_* from .env)
         $this->call([
             RolesSeeder::class,
             UsersSeeder::class,
+            DemoSeeder::class,
         ]);
 
         // Example test user (kept for local testing)
@@ -26,7 +28,8 @@ class DatabaseSeeder extends Seeder
             ['email' => 'test@example.com'],
             [
                 'name' => 'Test User',
-                'password' => 'password',
+                'password' => Hash::make('password'),
+                'phone' => env('TEST_USER_PHONE', '0000000000'),
                 'email_verified_at' => now(),
             ]
         );
