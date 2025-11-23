@@ -9,6 +9,11 @@ use Illuminate\Validation\Rule;
 
 class ProfileUpdateRequest extends FormRequest
 {
+    public function authorize(): bool
+    {
+        // user must be authenticated to update profile
+        return $this->user() !== null;
+    }
     /**
      * Get the validation rules that apply to the request.
      *

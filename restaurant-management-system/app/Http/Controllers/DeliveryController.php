@@ -29,13 +29,15 @@ class DeliveryController extends Controller
     // show delivery
     public function show(Delivery $delivery)
     {
-        // restrict as needed
+        $this->authorize('view', $delivery);
+
         return new DeliveryResource($delivery->load('order','staff'));
     }
 
     // manager assigns a delivery (or auto-created in order controller)
     public function assign(Request $request, Delivery $delivery)
     {
+        $this->authorize('assign', $delivery);
         $request->validate([
             'assigned_user_id' => 'required|exists:users,id',
         ]);
@@ -59,10 +61,9 @@ class DeliveryController extends Controller
     // staff updates delivery status
     public function updateStatus(UpdateDeliveryStatusRequest $request, Delivery $delivery)
     {
+        $this->authorize('updateStatus', $delivery);
+
         $user = $request->user();
-        if ($user->role->name === 'staff' && $delivery->assigned_user_id !== $user->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         $old = $delivery->status;
         $delivery->status = $request->status;

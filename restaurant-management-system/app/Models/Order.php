@@ -24,6 +24,12 @@ class Order extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
+    // alias used in API resources/controllers
+    public function assignedStaff()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
     public function items()
     {
         return $this->hasMany(OrderItem::class);

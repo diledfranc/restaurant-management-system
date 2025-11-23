@@ -3,12 +3,14 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
+use App\Models\MenuItem;
 
 class StoreMenuItemRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return Gate::forUser($this->user())->allows('create', MenuItem::class);
     }
 
     public function rules(): array

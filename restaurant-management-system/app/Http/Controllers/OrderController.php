@@ -106,20 +106,7 @@ class OrderController extends Controller
     // show single order
     public function show(Order $order)
     {
-        // authorization: owner, assigned staff, manager, admin
-        $user = request()->user();
-        if (!$user || !($user->id === $order->user_id
-            || $user->id === $order->assigned_to
-            || in_array($user->role->name, ['manager','admin']))) {
-            // allow guests? if order has no user but guest_phone matches - handled in frontend tracking via token
-            // For API, deny otherwise
-            // In production, use Policies
-            // Here return 403
-            // Note: manager/admin can view
-            if (!in_array($user?->role->name, ['manager','admin'])) {
-                return response()->json(['message' => 'Forbidden'], 403);
-            }
-        }
+        $this->authorize('view', $order);
 
         return new OrderResource($order->load('items.menuItem','user','assignedStaff'));
     }
@@ -127,20 +114,9 @@ class OrderController extends Controller
     // update order status
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order)
     {
+        $this->authorize('updateStatus', $order);
+
         $user = $request->user();
-
-        // Authorization example: staff can update some status, manager can update all
-        $allowed = false;
-        if (in_array($user->role->name, ['manager','admin'])) {
-            $allowed = true;
-        } elseif ($user->role->name === 'staff' && $order->assigned_to == $user->id) {
-            // staff can move preparing -> on_way -> delivered etc.
-            $allowed = true;
-        }
-
-        if (!$allowed) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         $old = $order->status;
         $order->status = $request->status;
@@ -173,7 +149,7 @@ class OrderController extends Controller
     // assign staff to order (manager action)
     public function assignStaff(Request $request, Order $order)
     {
-        $this->authorize('assign', $order); // you can implement OrderPolicy or use middleware; placeholder
+        $this->authorize('assign', $order);
         $request->validate([
             'assigned_to' => 'required|exists:users,id',
         ]);
@@ -196,10 +172,10 @@ class OrderController extends Controller
     // delete order (soft-delete)
     public function destroy(Order $order)
     {
+
+        $this->authorize('delete', $order);
+
         $user = request()->user();
-        if (!in_array($user?->role->name, ['manager','admin'])) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
 
         $order->delete();
 

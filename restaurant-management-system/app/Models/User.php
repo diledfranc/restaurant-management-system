@@ -42,17 +42,22 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'two_factor_confirmed_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'two_factor_confirmed_at' => 'datetime',
+    ];
 
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_user');
+    }
+
+    /**
+     * Convenience accessor to get the first role (used by controllers)
+     */
+    public function getRoleAttribute()
+    {
+        return $this->roles()->first();
     }
 }

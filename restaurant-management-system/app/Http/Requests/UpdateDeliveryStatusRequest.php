@@ -3,12 +3,14 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class UpdateDeliveryStatusRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        $delivery = $this->route('delivery');
+        return Gate::forUser($this->user())->allows('updateStatus', $delivery);
     }
 
     public function rules(): array

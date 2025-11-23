@@ -3,12 +3,15 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
+use App\Models\Order;
 
 class StoreOrderRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // Controller/policies will enforce role-based access if needed
+        // Allow guests and authorized users to create orders per OrderPolicy::create
+        return Gate::forUser($this->user())->allows('create', Order::class);
     }
 
     public function rules(): array

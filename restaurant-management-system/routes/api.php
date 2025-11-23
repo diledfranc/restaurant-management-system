@@ -20,6 +20,12 @@ Route::get('/menu/{menuItem}', [MenuItemController::class, 'show']);
 Route::get('/categories', [MenuCategoryController::class, 'index']);
 Route::get('/categories/{category}', [MenuCategoryController::class, 'show']);
 
+// Legacy-compatible endpoints
+Route::get('/menu-items', [MenuItemController::class, 'index']);
+Route::get('/menu-items/{menuItem}', [MenuItemController::class, 'show']);
+Route::get('/menu-categories', [MenuCategoryController::class, 'index']);
+Route::get('/menu-categories/{menuCategory}', [MenuCategoryController::class, 'show']);
+
 // Protected admin/manager routes for create/update/delete
 Route::middleware(['auth:sanctum', 'role:manager,admin'])->group(function () {
     Route::apiResource('categories', MenuCategoryController::class)->except(['index','show']);

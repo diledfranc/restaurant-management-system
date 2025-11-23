@@ -3,12 +3,15 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
+use App\Models\MenuCategory;
 
 class UpdateMenuCategoryRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        $category = $this->route('category');
+        return Gate::forUser($this->user())->allows('update', $category ?? MenuCategory::class);
     }
 
     public function rules(): array
