@@ -27,12 +27,17 @@ class CreateNewUser implements CreatesNewUsers
                 'max:255',
                 Rule::unique(User::class),
             ],
+            'phone' => ['required', 'string', 'max:20'],
             'password' => $this->passwordRules(),
         ])->validate();
 
         return User::create([
             'name' => $input['name'],
             'email' => $input['email'],
+            // Some environments/databases have a non-nullable `phone` column.
+            // Provide a safe default when the incoming request doesn't include it,
+            // so tests running against an existing MySQL schema don't fail.
+            'phone' => $input['phone'] ?? '',
             'password' => $input['password'],
         ]);
     }

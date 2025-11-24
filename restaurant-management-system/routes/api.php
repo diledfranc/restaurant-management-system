@@ -26,8 +26,8 @@ Route::get('/menu-items/{menuItem}', [MenuItemController::class, 'show']);
 Route::get('/menu-categories', [MenuCategoryController::class, 'index']);
 Route::get('/menu-categories/{menuCategory}', [MenuCategoryController::class, 'show']);
 
-// Protected admin/manager routes for create/update/delete
-Route::middleware(['auth:sanctum', 'role:manager,admin'])->group(function () {
+// Protected routes for management actions — policies enforce manager/admin
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('categories', MenuCategoryController::class)->except(['index','show']);
     Route::apiResource('menu-items', MenuItemController::class)->except(['index','show']);
     Route::get('/reports/sales', [\App\Http\Controllers\ReportController::class, 'sales']);
@@ -52,5 +52,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::patch('/deliveries/{delivery}/status', [DeliveryController::class, 'updateStatus']);
 });
 
-// Activity logs
-Route::middleware(['auth:sanctum','role:manager,admin'])->get('/activity-logs', [ActivityLogController::class, 'index']);
+// Activity logs (policies enforce manager/admin)
+Route::middleware(['auth:sanctum'])->get('/activity-logs', [ActivityLogController::class, 'index']);

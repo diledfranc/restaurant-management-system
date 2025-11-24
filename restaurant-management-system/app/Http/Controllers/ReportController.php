@@ -14,6 +14,9 @@ class ReportController extends Controller
     // Sales totals grouped by day in cents
     public function sales(Request $request)
     {
+        // Use ActivityLog policy to restrict reports to manager/admin
+        $this->authorize('viewAny', \App\Models\ActivityLog::class);
+
         $from = $request->input('from') ? Carbon::parse($request->input('from')) : Carbon::now()->subDays(30);
         $to = $request->input('to') ? Carbon::parse($request->input('to')) : Carbon::now();
 
@@ -30,6 +33,9 @@ class ReportController extends Controller
     // Low-selling items by quantity sold (ascending) within the period
     public function lowSelling(Request $request)
     {
+        // Use ActivityLog policy to restrict reports to manager/admin
+        $this->authorize('viewAny', \App\Models\ActivityLog::class);
+
         $from = $request->input('from') ? Carbon::parse($request->input('from')) : Carbon::now()->subDays(30);
         $to = $request->input('to') ? Carbon::parse($request->input('to')) : Carbon::now();
         $limit = intval($request->input('limit', 10));

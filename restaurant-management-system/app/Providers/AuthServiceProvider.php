@@ -12,6 +12,7 @@ use App\Policies\OrderPolicy;
 use App\Policies\DeliveryPolicy;
 use App\Policies\MenuCategoryPolicy;
 use App\Policies\MenuItemPolicy;
+use App\Policies\ActivityLogPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -20,10 +21,16 @@ class AuthServiceProvider extends ServiceProvider
         Delivery::class => DeliveryPolicy::class,
         MenuCategory::class => MenuCategoryPolicy::class,
         MenuItem::class => MenuItemPolicy::class,
+        \App\Models\ActivityLog::class => ActivityLogPolicy::class,
     ];
 
     public function boot()
     {
         $this->registerPolicies();
+
+        // Gates for miscellaneous abilities (reports, etc.)
+        Gate::define('view-reports', function ($user) {
+            return in_array($user->role->name, ['manager', 'admin']);
+        });
     }
 }

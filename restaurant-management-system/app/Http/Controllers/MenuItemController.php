@@ -49,6 +49,8 @@ class MenuItemController extends Controller
 
     public function destroy(MenuItem $menuItem)
     {
+        $this->authorize('delete', $menuItem);
+
         $menuItem->delete();
 
         return response()->json(['message' => 'Menu item deleted']);

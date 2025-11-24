@@ -26,11 +26,15 @@ class DemoSeeder extends Seeder
             $items = MenuItem::inRandomOrder()->take(rand(1, 4))->get();
 
             foreach ($items as $item) {
+                $qty = rand(1, 3);
+                $unit = $item->price_cents ?? 0;
+
                 OrderItem::factory()->create([
                     'order_id' => $order->id,
                     'menu_item_id' => $item->id,
-                    'price' => $item->price ?? 0,
-                    'quantity' => rand(1, 3),
+                    'quantity' => $qty,
+                    'unit_price_cents' => $unit,
+                    'total_price_cents' => $unit * $qty,
                 ]);
             }
         });

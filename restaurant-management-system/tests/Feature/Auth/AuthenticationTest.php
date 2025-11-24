@@ -18,6 +18,9 @@ test('users can authenticate using the login screen', function () {
         'password' => 'password',
     ]);
 
+    // DEBUG: write response body for investigation when running locally
+    file_put_contents(__DIR__ . '/../../tmp_login_response.html', (string) $response->getContent());
+
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
 });
