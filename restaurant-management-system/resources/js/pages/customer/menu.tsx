@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, ArrowRight } from 'lucide-react';
+import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 
 interface MenuItem {
     id: number;
@@ -100,7 +101,8 @@ export default function CustomerMenuPage() {
                 <Link href="/" className="text-lg font-semibold">
                     TasteHub
                 </Link>
-                <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-2 text-sm">
+                    <AppearanceToggleDropdown />
                     <Link href="/login" className="text-muted-foreground hover:text-foreground">
                         Log in
                     </Link>

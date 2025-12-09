@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 
 interface CartLine {
     id: number;
@@ -95,7 +95,8 @@ export default function CustomerCheckoutPage() {
                 <Link href="/shop" className="text-lg font-semibold">
                     TasteHub
                 </Link>
-                <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-2 text-sm">
+                    <AppearanceToggleDropdown />
                     <Link href="/login" className="text-muted-foreground hover:text-foreground">
                         Log in
                     </Link>
@@ -114,7 +115,7 @@ export default function CustomerCheckoutPage() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
-                    <Card asChild>
+                    <Card>
                         <form onSubmit={handleSubmit} className="flex flex-col">
                             <CardHeader>
                                 <CardTitle className="text-lg">Your details</CardTitle>
@@ -136,12 +137,13 @@ export default function CustomerCheckoutPage() {
                                 </div>
                                 <div className="space-y-1">
                                     <Label htmlFor="guest_address">Address</Label>
-                                    <Textarea
+                                    <textarea
                                         id="guest_address"
                                         value={form.guest_address}
                                         onChange={updateField('guest_address')}
                                         rows={3}
                                         required
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                     />
                                     {errors.guest_address && (
                                         <p className="text-xs text-destructive">{errors.guest_address[0]}</p>
