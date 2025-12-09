@@ -28,17 +28,23 @@ Route::middleware(['auth'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
-    // Management pages
-    Route::get('/menu', [MenuItemController::class, 'index'])->name('menu.index');
-    Route::get('/orders', [OrderController::class, 'pageIndex'])->name('orders.index');
-    Route::get('/reports', [ReportController::class, 'pageIndex'])->name('reports.index');
-    Route::get('/delivery', [DeliveryController::class, 'pageIndex'])->name('delivery.index');
-    Route::get('/staff', function () {
-        return Inertia::render('staff/index');
-    })->name('staff.index');
-    Route::get('/reservations', function () {
-        return Inertia::render('reservations/index');
-    })->name('reservations.index');
+    // Management pages - accessible by manager, staff, and admin
+    Route::middleware(['role:admin,manager,staff'])->group(function () {
+        Route::get('/menu', [MenuItemController::class, 'index'])->name('menu.index');
+        Route::get('/orders', [OrderController::class, 'pageIndex'])->name('orders.index');
+        Route::get('/reports', [ReportController::class, 'pageIndex'])->name('reports.index');
+        Route::get('/delivery', [DeliveryController::class, 'pageIndex'])->name('delivery.index');
+        Route::get('/reservations', function () {
+            return Inertia::render('reservations/index');
+        })->name('reservations.index');
+    });
+
+    // Staff management - admin only
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/staff', function () {
+            return Inertia::render('staff/index');
+        })->name('staff.index');
+    });
 });
 
 require __DIR__.'/settings.php';

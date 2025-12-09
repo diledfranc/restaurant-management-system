@@ -16,7 +16,9 @@ class RoleMiddleware
         $user = Auth::user();
 
         if (!$user) {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Forbidden'], 403)
+                : redirect()->route('dashboard')->with('error', 'Access denied.');
         }
 
         // If user has a roles() relation (many-to-many), check collection
@@ -27,7 +29,9 @@ class RoleMiddleware
                     return $next($request);
                 }
             }
-            return response()->json(['message' => 'Forbidden'], 403);
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Forbidden'], 403)
+                : redirect()->route('dashboard')->with('error', 'Access denied.');
         }
 
         // Fallback: check singular `role` relation/property
@@ -35,6 +39,8 @@ class RoleMiddleware
             return $next($request);
         }
 
-        return response()->json(['message' => 'Forbidden'], 403);
+        return $request->expectsJson()
+            ? response()->json(['message' => 'Forbidden'], 403)
+            : redirect()->route('dashboard')->with('error', 'Access denied.');
     }
 }
