@@ -14,6 +14,15 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+// Public customer shop
+Route::get('/shop', function () {
+    return Inertia::render('customer/menu');
+})->name('shop.menu');
+
+Route::get('/shop/checkout', function () {
+    return Inertia::render('customer/checkout');
+})->name('shop.checkout');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
