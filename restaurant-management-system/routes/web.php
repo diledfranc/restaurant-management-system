@@ -4,6 +4,9 @@ use App\Http\Controllers\MenuItemController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\SettingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -33,8 +36,8 @@ Route::middleware(['auth'])->group(function () {
         return Inertia::render('customer/orders');
     })->name('customer.orders');
 
-    // Management pages - accessible by manager, staff, and admin
-    Route::middleware(['role:admin,manager,staff'])->group(function () {
+    // Manager & Staff Operations
+    Route::middleware(['role:manager,staff'])->group(function () {
         Route::get('/menu', [MenuItemController::class, 'index'])->name('menu.index');
         Route::get('/orders', [OrderController::class, 'pageIndex'])->name('orders.index');
         Route::get('/reports', [ReportController::class, 'pageIndex'])->name('reports.index');
@@ -44,11 +47,17 @@ Route::middleware(['auth'])->group(function () {
         })->name('reservations.index');
     });
 
-    // Staff management - admin only
+    // Admin Management
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('/staff', function () {
-            return Inertia::render('staff/index');
-        })->name('staff.index');
+        Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+        Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+        Route::put('/staff/{user}', [StaffController::class, 'update'])->name('staff.update');
+        Route::delete('/staff/{user}', [StaffController::class, 'destroy'])->name('staff.destroy');
+
+        Route::get('/logs', [ActivityLogController::class, 'index'])->name('logs.index');
+
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
     });
 });
 
