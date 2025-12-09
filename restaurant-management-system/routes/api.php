@@ -27,7 +27,7 @@ Route::get('/menu-categories', [MenuCategoryController::class, 'index']);
 Route::get('/menu-categories/{menuCategory}', [MenuCategoryController::class, 'show']);
 
 // Protected routes for management actions — policies enforce manager/admin
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth', 'web'])->group(function () {
     Route::apiResource('categories', MenuCategoryController::class)->except(['index','show']);
     Route::apiResource('menu-items', MenuItemController::class)->except(['index','show']);
     Route::get('/reports/sales', [\App\Http\Controllers\ReportController::class, 'sales']);
@@ -36,7 +36,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // Orders
 Route::post('/orders', [OrderController::class, 'store']); // guest allowed
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth', 'web'])->group(function () {
     Route::get('/orders', [OrderController::class, 'index']); // staff/manager filtered by role
     Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
@@ -48,7 +48,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // Deliveries
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth', 'web'])->group(function () {
     Route::get('/deliveries', [DeliveryController::class, 'index']);
     Route::get('/deliveries/{delivery}', [DeliveryController::class, 'show']);
     Route::post('/deliveries/{delivery}/assign', [DeliveryController::class, 'assign']);
@@ -56,4 +56,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // Activity logs (policies enforce manager/admin)
-Route::middleware(['auth:sanctum'])->get('/activity-logs', [ActivityLogController::class, 'index']);
+Route::middleware(['auth', 'web'])->get('/activity-logs', [ActivityLogController::class, 'index']);

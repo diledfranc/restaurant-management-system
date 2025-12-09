@@ -1,73 +1,78 @@
 import { useMemo, useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import { useEffect, useState } from 'react';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { RefreshCw } from 'lucide-react';
-
+import { Spinner } from '@/components/ui/spinner';
+];
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Delivery', href: '/delivery' },
 ];
-
-type Delivery = {
-    id: number;
     status: string;
-    pickup_time?: string | null;
-    delivered_time?: string | null;
-    created_at: string;
-    assigned_user?: {
-        id: number;
-        name: string;
-    } | null;
-    order?: {
-        id: number;
-        status: string;
-        total_cents: number;
-    } | null;
-};
-
-type DeliveryPageProps = {
-    deliveries: {
+interface Delivery {
+    id: number;
+    address: string;
+    status: string;
+}
         data: Delivery[];
-    };
-    filters: {
-        status?: string;
-    };
+export default function DeliveryPage() {
+    const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+    const [loading, setLoading] = useState(true);
 };
-
-const statusLabels: Record<string, string> = {
-    pending: 'Pending',
-    assigned: 'Assigned',
-    on_route: 'On route',
-    picked_up: 'Picked up',
-    delivered: 'Delivered',
-    failed: 'Failed',
+    useEffect(() => {
+        const fetchDeliveries = async () => {
+            setLoading(true);
+            try {
+                const response = await fetch('/api/deliveries');
+                if (response.ok) {
+                    const data = await response.json();
+                    setDeliveries(Array.isArray(data?.data) ? data.data : data);
+                }
+            } catch (error) {
+                // handle error
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDeliveries();
+    }, []);
 };
-
-const statusOptions = Object.keys(statusLabels);
-
-const formatCurrency = (cents?: number) => cents !== undefined ? `$${(cents / 100).toFixed(2)}` : '—';
-
-export default function DeliveryIndex() {
-    const { deliveries, filters } = usePage<DeliveryPageProps>().props;
-    const [statusFilter, setStatusFilter] = useState(filters.status ?? '');
-    const [loadingIds, setLoadingIds] = useState<number[]>([]);
-
-    const handleFilterChange = (value: string) => {
         setStatusFilter(value);
-        router.get(
-            '/delivery',
-            { status: value || undefined },
-            { preserveState: true, preserveScroll: true, replace: true }
-        );
-    };
-
     const handleStatusUpdate = async (deliveryId: number, nextStatus: string) => {
-        setLoadingIds((ids) => [...ids, deliveryId]);
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Delivery" />
+            <div className="p-4">
+                <h2 className="text-2xl font-bold mb-4">Deliveries</h2>
+                {loading ? (
+                    <Spinner />
+                ) : deliveries.length === 0 ? (
+                    <div className="rounded-xl border p-4 text-center">No deliveries found.</div>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {deliveries.map((delivery) => (
+                            <Card key={delivery.id}>
+                                <CardHeader>
+                                    <CardTitle>{delivery.address}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="mb-2">Status: {delivery.status}</p>
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" size="sm">View</Button>
+                                        <Button variant="destructive" size="sm">Delete</Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </AppLayout>
+    );
         try {
             const response = await fetch(`/api/deliveries/${deliveryId}/status`, {
                 method: 'PATCH',

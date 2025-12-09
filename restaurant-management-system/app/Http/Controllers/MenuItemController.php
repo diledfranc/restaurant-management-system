@@ -52,10 +52,21 @@ class MenuItemController extends Controller
 
     public function destroy(MenuItem $menuItem)
     {
-        $this->authorize('delete', $menuItem);
+        \Log::info('Attempting to delete menu item', ['id' => $menuItem->id, 'user_id' => auth()->id()]);
+        try {
+            $this->authorize('delete', $menuItem);
+        } catch (\Exception $e) {
+            \Log::error('Authorization failed for menu item delete', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
 
-        $menuItem->delete();
-
-        return response()->json(['message' => 'Menu item deleted']);
+        try {
+            $menuItem->delete();
+            \Log::info('Menu item deleted', ['id' => $menuItem->id]);
+            return response()->json(['message' => 'Menu item deleted']);
+        } catch (\Exception $e) {
+            \Log::error('Delete failed', ['error' => $e->getMessage(), 'id' => $menuItem->id]);
+            return response()->json(['error' => 'Delete failed', 'details' => $e->getMessage()], 500);
+        }
     }
 }

@@ -19,16 +19,19 @@ class MenuItemPolicy
 
     public function create(User $user)
     {
-        return in_array($user->role?->name, ['manager','admin']);
+        $roleNames = $user->roles->pluck('name')->toArray();
+        return in_array('manager', $roleNames) || in_array('admin', $roleNames);
     }
 
     public function update(User $user, MenuItem $item)
     {
-        return in_array($user->role?->name, ['manager','admin']);
+        $roleNames = $user->roles->pluck('name')->toArray();
+        return in_array('manager', $roleNames) || in_array('admin', $roleNames);
     }
 
     public function delete(User $user, MenuItem $item)
     {
-        return in_array($user->role?->name, ['manager','admin']);
+        $roleNames = $user->roles->pluck('name')->toArray();
+        return in_array('manager', $roleNames) || in_array('admin', $roleNames);
     }
 }

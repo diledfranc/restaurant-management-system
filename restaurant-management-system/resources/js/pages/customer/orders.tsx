@@ -53,14 +53,15 @@ export default function CustomerOrders() {
 
     useEffect(() => {
         const fetchOrders = async () => {
+            setLoading(true);
             try {
-                const res = await fetch('/api/customer/orders');
-                if (res.ok) {
-                    const data = await res.json();
+                const response = await fetch('/api/customer/orders');
+                if (response.ok) {
+                    const data = await response.json();
                     setOrders(Array.isArray(data?.data) ? data.data : data);
                 }
-            } catch (err) {
-                console.error('Failed to load orders', err);
+            } catch (error) {
+                // handle error
             } finally {
                 setLoading(false);
             }

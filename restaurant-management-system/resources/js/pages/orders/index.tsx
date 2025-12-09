@@ -130,126 +130,58 @@ export default function OrdersIndex() {
     const renderedOrders = useMemo(() => orders.data, [orders]);
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Orders" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
-                <div className="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold">Orders</h2>
-                        <p className="text-sm text-muted-foreground">Manage and update order statuses.</p>
-                    </div>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <div className="space-y-1">
-                            <Label>Status</Label>
-                            <Select value={statusFilter} onValueChange={handleFilterChange}>
-                                <SelectTrigger className="w-40">
-                                    <SelectValue placeholder="All" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="">All</SelectItem>
-                                    {statusOptions.map((s) => (
-                                        <SelectItem key={s} value={s}>
-                                            {statusLabels[s]}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+        const [orders, setOrders] = useState<Order[]>([]);
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+            const fetchOrders = async () => {
+                setLoading(true);
+                try {
+                    const response = await fetch('/api/orders');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setOrders(Array.isArray(data?.data) ? data.data : data);
+                    }
+                } catch (error) {
+                    // handle error
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchOrders();
+        }, []);
+
+        return (
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="Orders" />
+                <div className="p-4">
+                    <h2 className="text-2xl font-bold mb-4">Orders</h2>
+                    {loading ? (
+                        <Spinner />
+                    ) : orders.length === 0 ? (
+                        <div className="rounded-xl border p-4 text-center">No orders found.</div>
+                    ) : (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {orders.map((order) => (
+                                <Card key={order.id}>
+                                    <CardHeader>
+                                        <CardTitle>Order #{order.id}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="mb-2">Customer: {order.customer_name}</p>
+                                        <p className="mb-2">Status: {order.status}</p>
+                                        <p className="mb-2">Total: ${(order.total_cents / 100).toFixed(2)}</p>
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" size="sm">View</Button>
+                                            <Button variant="destructive" size="sm">Delete</Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
                         </div>
-                        <Button variant="outline" size="icon" onClick={() => router.reload({ only: ['orders'] })}>
-                            <RefreshCw className="h-4 w-4" />
-                        </Button>
-                    </div>
+                    )}
                 </div>
-
-                <div className="grid gap-4">
-                    {renderedOrders.map((order) => {
-                        const isLoading = loadingIds.includes(order.id);
-                        return (
-                            <Card key={order.id} className="overflow-hidden">
-                                <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="space-y-1">
-                                        <CardTitle className="text-lg">Order #{order.id}</CardTitle>
-                                        <p className="text-sm text-muted-foreground">
-                                            Placed {new Date(order.created_at).toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant="outline">{statusLabels[order.status] ?? order.status}</Badge>
-                                        <Badge>{formatCurrency(order.total_cents)}</Badge>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    <div className="grid gap-2 text-sm sm:grid-cols-2">
-                                        <div>
-                                            <p className="font-semibold">Customer</p>
-                                            <p>{order.user?.name || order.guest_name || 'Guest'}</p>
-                                            <p className="text-muted-foreground">{order.user?.phone || order.guest_phone || 'N/A'}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold">Delivery</p>
-                                            <p>{order.guest_address || 'Pickup / not provided'}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-1 text-sm">
-                                        <p className="font-semibold">Items</p>
-                                        <div className="rounded-lg border">
-                                            {order.items?.map((item) => (
-                                                <div key={item.id} className="flex items-center justify-between border-b px-3 py-2 last:border-b-0">
-                                                    <div>
-                                                        <p className="font-medium">{item.menu_item.name}</p>
-                                                        <p className="text-xs text-muted-foreground">Qty {item.quantity}</p>
-                                                    </div>
-                                                    <p className="text-sm font-semibold">{formatCurrency(item.total_price_cents)}</p>
-                                                </div>
-                                            )) || <div className="p-3 text-sm text-muted-foreground">No items</div>}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <Label className="text-sm">Status</Label>
-                                            <Select
-                                                defaultValue={order.status}
-                                                onValueChange={(value) => handleStatusUpdate(order.id, value)}
-                                            >
-                                                <SelectTrigger className="w-40">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {statusOptions.map((s) => (
-                                                        <SelectItem key={s} value={s}>
-                                                            {statusLabels[s]}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="icon"
-                                                disabled={isLoading}
-                                                onClick={() => router.reload({ only: ['orders'] })}
-                                            >
-                                                <RefreshCw className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="destructive"
-                                                size="icon"
-                                                disabled={isLoading}
-                                                onClick={() => handleDelete(order.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
-                </div>
-            </div>
-        </AppLayout>
+            </AppLayout>
+        );
     );
 }
