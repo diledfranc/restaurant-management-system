@@ -13,14 +13,44 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, UtensilsCrossed, ShoppingCart, FileText, Truck, Users, Calendar } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: '/dashboard',
         icon: LayoutGrid,
+    },
+    {
+        title: 'Menu',
+        href: '/menu',
+        icon: UtensilsCrossed,
+    },
+    {
+        title: 'Orders',
+        href: '/orders',
+        icon: ShoppingCart,
+    },
+    {
+        title: 'Reports',
+        href: '/reports',
+        icon: FileText,
+    },
+    {
+        title: 'Delivery',
+        href: '/delivery',
+        icon: Truck,
+    },
+    {
+        title: 'Staff',
+        href: '/staff',
+        icon: Users,
+    },
+    {
+        title: 'Reservations',
+        href: '/reservations',
+        icon: Calendar,
     },
 ];
 

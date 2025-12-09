@@ -7,13 +7,16 @@ use App\Http\Requests\UpdateMenuItemRequest;
 use App\Http\Resources\MenuItemResource;
 use App\Models\MenuItem;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class MenuItemController extends Controller
 {
     public function index()
     {
         $items = MenuItem::with('category')->paginate(12);
-        return MenuItemResource::collection($items);
+        return Inertia::render('menu/index', [
+            'items' => MenuItemResource::collection($items)->response()->getData(true),
+        ]);
     }
 
     public function store(StoreMenuItemRequest $request)
