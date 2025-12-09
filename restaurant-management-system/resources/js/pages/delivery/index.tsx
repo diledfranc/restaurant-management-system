@@ -1,78 +1,78 @@
-import { useMemo, useState } from 'react';
+
+
+import { useState, useMemo } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { useEffect, useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Spinner } from '@/components/ui/spinner';
-];
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { RefreshCw } from 'lucide-react';
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Delivery', href: '/delivery' },
 ];
-    status: string;
+
 interface Delivery {
     id: number;
-    address: string;
     status: string;
+    created_at: string;
+    pickup_time?: string;
+    delivered_time?: string;
+    order?: {
+        id: number;
+        total_cents: number;
+        status: string;
+    };
+    assigned_user?: {
+        name: string;
+    };
 }
+
+interface DeliveryPageProps {
+    deliveries: {
         data: Delivery[];
+    };
+}
+
+const statusOptions = ['pending', 'assigned', 'picked_up', 'delivered', 'cancelled'];
+const statusLabels: Record<string, string> = {
+    pending: 'Pending',
+    assigned: 'Assigned',
+    picked_up: 'Picked Up',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled',
+};
+
+const formatCurrency = (cents?: number) => {
+    if (cents === undefined) return '—';
+    return `$${(cents / 100).toFixed(2)}`;
+};
+
 export default function DeliveryPage() {
-    const [deliveries, setDeliveries] = useState<Delivery[]>([]);
-    const [loading, setLoading] = useState(true);
-};
-    useEffect(() => {
-        const fetchDeliveries = async () => {
-            setLoading(true);
-            try {
-                const response = await fetch('/api/deliveries');
-                if (response.ok) {
-                    const data = await response.json();
-                    setDeliveries(Array.isArray(data?.data) ? data.data : data);
-                }
-            } catch (error) {
-                // handle error
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchDeliveries();
-    }, []);
-};
+    const { deliveries } = usePage<DeliveryPageProps>().props;
+    const [statusFilter, setStatusFilter] = useState('');
+    const [loadingIds, setLoadingIds] = useState<number[]>([]);
+
+    const renderedDeliveries = useMemo(() => {
+        if (!statusFilter || statusFilter === 'all') return deliveries.data;
+        return deliveries.data.filter((d) => d.status === statusFilter);
+    }, [deliveries.data, statusFilter]);
+
+    const handleFilterChange = (value: string) => {
         setStatusFilter(value);
+    };
+
     const handleStatusUpdate = async (deliveryId: number, nextStatus: string) => {
-    return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Delivery" />
-            <div className="p-4">
-                <h2 className="text-2xl font-bold mb-4">Deliveries</h2>
-                {loading ? (
-                    <Spinner />
-                ) : deliveries.length === 0 ? (
-                    <div className="rounded-xl border p-4 text-center">No deliveries found.</div>
-                ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {deliveries.map((delivery) => (
-                            <Card key={delivery.id}>
-                                <CardHeader>
-                                    <CardTitle>{delivery.address}</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="mb-2">Status: {delivery.status}</p>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" size="sm">View</Button>
-                                        <Button variant="destructive" size="sm">Delete</Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </AppLayout>
-    );
+        setLoadingIds((ids) => [...ids, deliveryId]);
         try {
             const response = await fetch(`/api/deliveries/${deliveryId}/status`, {
                 method: 'PATCH',
@@ -91,8 +91,6 @@ export default function DeliveryPage() {
         }
     };
 
-    const renderedDeliveries = useMemo(() => deliveries.data, [deliveries]);
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Delivery" />
@@ -110,7 +108,7 @@ export default function DeliveryPage() {
                                     <SelectValue placeholder="All" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">All</SelectItem>
+                                    <SelectItem value="all">All</SelectItem>
                                     {statusOptions.map((s) => (
                                         <SelectItem key={s} value={s}>
                                             {statusLabels[s]}
@@ -172,6 +170,7 @@ export default function DeliveryPage() {
                                             <Select
                                                 defaultValue={delivery.status}
                                                 onValueChange={(value) => handleStatusUpdate(delivery.id, value)}
+                                                disabled={isLoading}
                                             >
                                                 <SelectTrigger className="w-40">
                                                     <SelectValue />
@@ -185,14 +184,6 @@ export default function DeliveryPage() {
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            disabled={isLoading}
-                                            onClick={() => router.reload({ only: ['deliveries'] })}
-                                        >
-                                            <RefreshCw className="h-4 w-4" />
-                                        </Button>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -203,3 +194,4 @@ export default function DeliveryPage() {
         </AppLayout>
     );
 }
+

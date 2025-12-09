@@ -4,7 +4,6 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -77,14 +76,15 @@ const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
 export default function OrdersIndex() {
     const { orders, filters } = usePage<OrdersPageProps>().props;
-    const [statusFilter, setStatusFilter] = useState(filters.status ?? '');
+    const [statusFilter, setStatusFilter] = useState(filters?.status ?? '__all');
     const [loadingIds, setLoadingIds] = useState<number[]>([]);
 
     const handleFilterChange = (value: string) => {
         setStatusFilter(value);
+        const statusParam = value === '__all' ? undefined : value;
         router.get(
             '/orders',
-            { status: value || undefined },
+            { status: statusParam },
             { preserveState: true, preserveScroll: true, replace: true }
         );
     };
@@ -127,61 +127,151 @@ export default function OrdersIndex() {
         }
     };
 
-    const renderedOrders = useMemo(() => orders.data, [orders]);
+    const renderedOrders = useMemo(() => orders?.data ?? [], [orders]);
 
     return (
-        const [orders, setOrders] = useState<Order[]>([]);
-        const [loading, setLoading] = useState(true);
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Orders" />
 
-        useEffect(() => {
-            const fetchOrders = async () => {
-                setLoading(true);
-                try {
-                    const response = await fetch('/api/orders');
-                    if (response.ok) {
-                        const data = await response.json();
-                        setOrders(Array.isArray(data?.data) ? data.data : data);
-                    }
-                } catch (error) {
-                    // handle error
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchOrders();
-        }, []);
+            <div className="space-y-6 p-4 lg:p-6">
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <div className="space-y-1">
+                        <h1 className="text-2xl font-bold">Orders</h1>
+                        <p className="text-sm text-muted-foreground">Track orders, update status, and manage fulfillment.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.reload({ only: ['orders'] })}
+                        >
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Refresh
+                        </Button>
+                        <div className="w-44">
+                            <Label className="sr-only" htmlFor="status-filter">Status filter</Label>
+                            <Select value={statusFilter} onValueChange={handleFilterChange}>
+                                <SelectTrigger id="status-filter" aria-label="Status filter">
+                                    <SelectValue placeholder="All statuses" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__all">All statuses</SelectItem>
+                                    {statusOptions.map((value) => (
+                                        <SelectItem key={value} value={value}>
+                                            {statusLabels[value] ?? value}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </div>
 
-        return (
-            <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title="Orders" />
-                <div className="p-4">
-                    <h2 className="text-2xl font-bold mb-4">Orders</h2>
-                    {loading ? (
-                        <Spinner />
-                    ) : orders.length === 0 ? (
-                        <div className="rounded-xl border p-4 text-center">No orders found.</div>
-                    ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {orders.map((order) => (
-                                <Card key={order.id}>
-                                    <CardHeader>
-                                        <CardTitle>Order #{order.id}</CardTitle>
+                {renderedOrders.length === 0 ? (
+                    <div className="rounded-xl border p-6 text-center text-sm text-muted-foreground">
+                        No orders found for the current filter.
+                    </div>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {renderedOrders.map((order) => {
+                            const isLoading = loadingIds.includes(order.id);
+                            return (
+                                <Card key={order.id} className="border-border/70">
+                                    <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                                        <div>
+                                            <CardTitle className="text-lg">Order #{order.id}</CardTitle>
+                                            <p className="text-sm text-muted-foreground">
+                                                {new Date(order.created_at).toLocaleString()}
+                                            </p>
+                                        </div>
+                                        <Badge variant="secondary">{statusLabels[order.status] ?? order.status}</Badge>
                                     </CardHeader>
-                                    <CardContent>
-                                        <p className="mb-2">Customer: {order.customer_name}</p>
-                                        <p className="mb-2">Status: {order.status}</p>
-                                        <p className="mb-2">Total: ${(order.total_cents / 100).toFixed(2)}</p>
-                                        <div className="flex gap-2">
-                                            <Button variant="outline" size="sm">View</Button>
-                                            <Button variant="destructive" size="sm">Delete</Button>
+                                    <CardContent className="space-y-4 text-sm">
+                                        <div className="space-y-1">
+                                            <p className="font-medium">Customer</p>
+                                            {order.user ? (
+                                                <p>{order.user.name} {order.user.phone ? `• ${order.user.phone}` : ''}</p>
+                                            ) : (
+                                                <p>{order.guest_name ?? 'Guest'} {order.guest_phone ? `• ${order.guest_phone}` : ''}</p>
+                                            )}
+                                            {order.guest_address && <p className="text-muted-foreground">{order.guest_address}</p>}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between font-medium">
+                                                <span>Items</span>
+                                                <span>{formatCurrency(order.total_cents)}</span>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {order.items?.map((item) => (
+                                                    <div key={item.id} className="flex items-center justify-between text-muted-foreground">
+                                                        <span>{item.menu_item.name} × {item.quantity}</span>
+                                                        <span>{formatCurrency(item.total_price_cents)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid gap-3">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <Label className="text-xs text-muted-foreground">Payment</Label>
+                                                    <p className="font-medium">{order.payment_method || 'N/A'}</p>
+                                                </div>
+                                                <div>
+                                                    <Label className="text-xs text-muted-foreground">Assigned to</Label>
+                                                    <p className="font-medium">{order.assigned_to?.name ?? 'Unassigned'}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label className="text-xs text-muted-foreground">Update status</Label>
+                                                <Select
+                                                    value={order.status}
+                                                    onValueChange={(value) => handleStatusUpdate(order.id, value)}
+                                                    disabled={isLoading}
+                                                >
+                                                    <SelectTrigger className="h-9">
+                                                        <SelectValue placeholder="Select status" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {statusOptions.map((value) => (
+                                                            <SelectItem key={value} value={value}>
+                                                                {statusLabels[value] ?? value}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2">
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                                size="sm"
+                                                className="rounded-full"
+                                            >
+                                                <Link href={`/orders/${order.id}`}>View details</Link>
+                                            </Button>
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                className="rounded-full"
+                                                onClick={() => handleDelete(order.id)}
+                                                disabled={isLoading}
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Delete
+                                            </Button>
                                         </div>
                                     </CardContent>
                                 </Card>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </AppLayout>
-        );
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        </AppLayout>
     );
 }

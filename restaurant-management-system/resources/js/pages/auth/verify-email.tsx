@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { logout } from '@/routes';
-import { send } from '@/routes/verification';
-import { Form, Head } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
@@ -22,23 +21,18 @@ export default function VerifyEmail({ status }: { status?: string }) {
                 </div>
             )}
 
-            <Form {...send.form()} className="space-y-6 text-center">
-                {({ processing }) => (
-                    <>
-                        <Button disabled={processing} variant="secondary">
-                            {processing && <Spinner />}
-                            Resend verification email
-                        </Button>
+            <div className="space-y-6 text-center">
+                <Button variant="secondary" disabled>
+                    Resend verification email (Disabled)
+                </Button>
 
-                        <TextLink
-                            href={logout()}
-                            className="mx-auto block text-sm"
-                        >
-                            Log out
-                        </TextLink>
-                    </>
-                )}
-            </Form>
+                <TextLink
+                    href={logout()}
+                    className="mx-auto block text-sm"
+                >
+                    Log out
+                </TextLink>
+            </div>
         </AuthLayout>
     );
 }

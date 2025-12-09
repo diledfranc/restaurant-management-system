@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
@@ -23,6 +23,7 @@ interface MenuItem {
 export default function MenuItemsPage() {
     const [items, setItems] = useState<MenuItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deletingIds, setDeletingIds] = useState<number[]>([]);
 
     useEffect(() => {
         const fetchItems = async () => {
@@ -34,13 +35,49 @@ export default function MenuItemsPage() {
                     setItems(Array.isArray(data?.data) ? data.data : data);
                 }
             } catch (error) {
-                // handle error
+                // optionally surface error to user
             } finally {
                 setLoading(false);
             }
         };
         fetchItems();
     }, []);
+
+    const handleDelete = (id: number) => {
+        if (!confirm('Delete this menu item?')) return;
+        setDeletingIds((ids) => [...ids, id]);
+        
+        // Get CSRF token from cookie or meta tag
+        const getCookie = (name: string): string => {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+            return document.querySelector('[name="csrf-token"]')?.getAttribute('content') || '';
+        };
+
+        const csrfToken = getCookie('XSRF-TOKEN');
+
+        fetch(`/api/menu-items/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': csrfToken,
+            },
+        })
+            .then((response) => {
+                if (response.ok) {
+                    setItems((prev) => prev.filter((item) => item.id !== id));
+                } else {
+                    console.error('Delete failed:', response.status);
+                }
+            })
+            .catch((error) => {
+                console.error('Delete error:', error);
+            })
+            .finally(() => {
+                setDeletingIds((ids) => ids.filter((itemId) => itemId !== id));
+            });
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -63,14 +100,21 @@ export default function MenuItemsPage() {
                                     <p className="text-lg font-bold mb-2">${(item.price_cents / 100).toFixed(2)}</p>
                                     <div className="flex gap-2">
                                         <Button variant="outline" size="sm">Edit</Button>
-                                        <Button variant="destructive" size="sm">Delete</Button>
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={() => handleDelete(item.id)}
+                                            disabled={deletingIds.includes(item.id)}
+                                        >
+                                            Delete
+                                        </Button>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </AppLayout>
-    );
-}
+                                 </CardContent>
+                             </Card>
+                         ))}
+                     </div>
+                 )}
+             </div>
+         </AppLayout>
+     );
+ }

@@ -11,11 +11,21 @@ use Inertia\Inertia;
 
 class MenuItemController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $items = MenuItem::with('category')->paginate(12);
+        $query = MenuItem::with('category');
+
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        $items = $query->paginate(12)->withQueryString();
+        $categories = \App\Models\MenuCategory::all();
+
         return Inertia::render('menu/index', [
             'items' => MenuItemResource::collection($items)->response()->getData(true),
+            'categories' => $categories,
+            'filters' => $request->only(['category']),
         ]);
     }
 

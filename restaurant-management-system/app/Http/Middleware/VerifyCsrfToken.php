@@ -9,6 +9,15 @@ use Illuminate\Support\Facades\Log;
 class VerifyCsrfToken extends BaseVerifier
 {
     /**
+     * The URIs that should be excluded from CSRF verification.
+     *
+     * @var array<int, string>
+     */
+    protected $except = [
+        'api/*',
+    ];
+
+    /**
      * Override to bypass CSRF verification in testing environment.
      */
     public function handle($request, Closure $next)
