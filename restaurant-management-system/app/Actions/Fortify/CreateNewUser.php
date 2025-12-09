@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -31,11 +32,17 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'phone' => $input['phone'],
             'password' => $input['password'],
         ]);
+
+        // Default every self-registered user to the customer role; elevated roles are admin-assigned only.
+        $customerRoleId = Role::firstOrCreate(['name' => 'customer'])->id;
+        $user->roles()->syncWithoutDetaching([$customerRoleId]);
+
+        return $user;
     }
 }
