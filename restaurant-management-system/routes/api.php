@@ -42,6 +42,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
     Route::post('/orders/{order}/assign', [OrderController::class, 'assignStaff']); // manager/admin
     Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
+    
+    // Customer-specific: view their own orders
+    Route::get('/customer/orders', [OrderController::class, 'customerOrders']);
 });
 
 // Deliveries

@@ -28,6 +28,11 @@ Route::middleware(['auth'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
+    // Customer-specific pages (all authenticated users)
+    Route::get('/customer/orders', function () {
+        return Inertia::render('customer/orders');
+    })->name('customer.orders');
+
     // Management pages - accessible by manager, staff, and admin
     Route::middleware(['role:admin,manager,staff'])->group(function () {
         Route::get('/menu', [MenuItemController::class, 'index'])->name('menu.index');

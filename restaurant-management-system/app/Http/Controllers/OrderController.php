@@ -199,6 +199,27 @@ class OrderController extends Controller
         return new OrderResource($order->fresh()->load('assignedStaff'));
     }
 
+    // Customer-specific: get their own orders
+    public function customerOrders(Request $request)
+    {
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $orders = Order::with(['items.menuItem'])
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhere('guest_phone', $user->phone)
+                      ->orWhere('guest_name', $user->name);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return OrderResource::collection($orders);
+    }
+
     // delete order (soft-delete)
     public function destroy(Order $order)
     {

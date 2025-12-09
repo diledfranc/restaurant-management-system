@@ -11,12 +11,12 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, UtensilsCrossed, ShoppingCart, FileText, Truck, Users, Calendar } from 'lucide-react';
+import { type NavItem, type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import { BookOpen, Folder, LayoutGrid, UtensilsCrossed, ShoppingCart, FileText, Truck, Users, Calendar, Home, User } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
+const managementNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: '/dashboard',
@@ -54,6 +54,29 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
+const customerNavItems: NavItem[] = [
+    {
+        title: 'Home',
+        href: '/',
+        icon: Home,
+    },
+    {
+        title: 'Menu',
+        href: '/shop',
+        icon: UtensilsCrossed,
+    },
+    {
+        title: 'My Orders',
+        href: '/customer/orders',
+        icon: ShoppingCart,
+    },
+    {
+        title: 'Profile',
+        href: '/settings/profile',
+        icon: User,
+    },
+];
+
 const footerNavItems: NavItem[] = [
     {
         title: 'Repository',
@@ -68,6 +91,28 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const page = usePage<SharedData>();
+    const { roles } = page.props.auth;
+    
+    // Determine if user has management access (admin, manager, or staff)
+    const hasManagementAccess = roles?.some((role: string) => 
+        ['admin', 'manager', 'staff'].includes(role)
+    );
+    
+    // Filter management items based on role
+    const getMainNavItems = () => {
+        if (!hasManagementAccess) {
+            return customerNavItems;
+        }
+        
+        // For management users, filter out staff page unless admin
+        if (!roles?.includes('admin')) {
+            return managementNavItems.filter(item => item.title !== 'Staff');
+        }
+        
+        return managementNavItems;
+    };
+    
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -83,7 +128,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={getMainNavItems()} />
             </SidebarContent>
 
             <SidebarFooter>
