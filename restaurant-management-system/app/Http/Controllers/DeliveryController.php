@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\ActivityLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class DeliveryController extends Controller
 {
@@ -24,6 +25,29 @@ class DeliveryController extends Controller
         $deliveries = $query->orderBy('created_at', 'desc')->paginate(15);
 
         return DeliveryResource::collection($deliveries);
+    }
+
+    // Inertia page for management UI
+    public function pageIndex(Request $request)
+    {
+        $query = Delivery::with(['order','staff']);
+
+        if ($request->user()->role->name === 'staff') {
+            $query->where('assigned_user_id', $request->user()->id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $deliveries = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        return Inertia::render('delivery/index', [
+            'deliveries' => DeliveryResource::collection($deliveries)->response()->getData(true),
+            'filters' => [
+                'status' => $request->status,
+            ],
+        ]);
     }
 
     // show delivery

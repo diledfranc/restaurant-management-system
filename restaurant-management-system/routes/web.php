@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\MenuItemController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\DeliveryController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -18,15 +21,9 @@ Route::middleware(['auth'])->group(function () {
 
     // Management pages
     Route::get('/menu', [MenuItemController::class, 'index'])->name('menu.index');
-    Route::get('/orders', function () {
-        return Inertia::render('orders/index');
-    })->name('orders.index');
-    Route::get('/reports', function () {
-        return Inertia::render('reports/index');
-    })->name('reports.index');
-    Route::get('/delivery', function () {
-        return Inertia::render('delivery/index');
-    })->name('delivery.index');
+    Route::get('/orders', [OrderController::class, 'pageIndex'])->name('orders.index');
+    Route::get('/reports', [ReportController::class, 'pageIndex'])->name('reports.index');
+    Route::get('/delivery', [DeliveryController::class, 'pageIndex'])->name('delivery.index');
     Route::get('/staff', function () {
         return Inertia::render('staff/index');
     })->name('staff.index');

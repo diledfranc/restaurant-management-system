@@ -11,6 +11,13 @@ class DeliveryResource extends JsonResource
         return [
             'id' => $this->id,
             'order_id' => $this->order_id,
+            'order' => $this->whenLoaded('order', function () {
+                return [
+                    'id' => $this->order->id,
+                    'status' => $this->order->status,
+                    'total_cents' => $this->order->total_cents,
+                ];
+            }),
             'assigned_user' => $this->whenLoaded('staff', function () {
                 return [
                     'id' => $this->staff?->id,

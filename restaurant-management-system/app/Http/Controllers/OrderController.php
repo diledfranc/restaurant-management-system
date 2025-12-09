@@ -12,6 +12,7 @@ use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class OrderController extends Controller
 {
@@ -37,6 +38,35 @@ class OrderController extends Controller
         $orders = $query->orderBy('created_at', 'desc')->paginate(15);
 
         return OrderResource::collection($orders);
+    }
+
+    // Inertia page for management UI
+    public function pageIndex(Request $request)
+    {
+        $query = Order::with(['items.menuItem','user','assignedStaff']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->assigned_to);
+        }
+
+        // Limit staff to their assigned orders
+        if ($request->user() && $request->user()->role->name === 'staff') {
+            $query->where('assigned_to', $request->user()->id);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        return Inertia::render('orders/index', [
+            'orders' => OrderResource::collection($orders)->response()->getData(true),
+            'filters' => [
+                'status' => $request->status,
+                'assigned_to' => $request->assigned_to,
+            ],
+        ]);
     }
 
     // Create order (guest or user)
