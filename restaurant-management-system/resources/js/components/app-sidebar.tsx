@@ -62,8 +62,6 @@ export function AppSidebar() {
         if (roles.includes('admin')) {
             return [
                 { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
-                { title: 'POS System', href: '/pos', icon: Calculator },
-                { title: 'Kitchen Display', href: '/kitchen', icon: Monitor },
                 { title: 'Staff', href: '/staff', icon: Users },
                 { title: 'Activity Logs', href: '/logs', icon: FileText },
                 { title: 'Settings', href: '/settings', icon: Settings },
