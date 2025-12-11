@@ -10,10 +10,14 @@ class OrderItemResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'menu_item' => [
+            'menu_item' => $this->menuItem ? [
                 'id' => $this->menuItem->id,
                 'name' => $this->menuItem->name,
                 'price_cents' => $this->menuItem->price_cents,
+            ] : [
+                'id' => 0,
+                'name' => 'Unknown Item (Deleted)',
+                'price_cents' => 0,
             ],
             'quantity' => $this->quantity,
             'unit_price_cents' => $this->unit_price_cents,

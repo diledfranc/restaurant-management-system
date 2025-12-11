@@ -31,7 +31,7 @@ class OrderController extends Controller
         }
 
         // if staff -> only their assigned orders
-        if ($request->user() && $request->user()->role->name === 'staff') {
+        if ($request->user() && $request->user()->role?->name === 'staff') {
             $query->where('assigned_to', $request->user()->id);
         }
 
@@ -54,7 +54,7 @@ class OrderController extends Controller
         }
 
         // Limit staff to their assigned orders
-        if ($request->user() && $request->user()->role->name === 'staff') {
+        if ($request->user() && $request->user()->role?->name === 'staff') {
             $query->where('assigned_to', $request->user()->id);
         }
 

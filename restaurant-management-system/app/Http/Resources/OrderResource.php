@@ -11,11 +11,11 @@ class OrderResource extends JsonResource
         return [
             'id' => $this->id,
             'user' => $this->whenLoaded('user', function () {
-                return [
-                    'id' => $this->user?->id,
-                    'name' => $this->user?->name,
-                    'phone' => $this->user?->phone,
-                ];
+                return $this->user ? [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                    'phone' => $this->user->phone,
+                ] : null;
             }),
             'guest_name' => $this->guest_name,
             'guest_phone' => $this->guest_phone,
@@ -24,10 +24,10 @@ class OrderResource extends JsonResource
             'payment_method' => $this->payment_method,
             'status' => $this->status,
             'assigned_to' => $this->whenLoaded('assignedStaff', function () {
-                return [
-                    'id' => $this->assignedStaff?->id,
-                    'name' => $this->assignedStaff?->name,
-                ];
+                return $this->assignedStaff ? [
+                    'id' => $this->assignedStaff->id,
+                    'name' => $this->assignedStaff->name,
+                ] : null;
             }),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'created_at' => $this->created_at->toDateTimeString(),
