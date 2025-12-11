@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, ArrowRight, UtensilsCrossed, ChevronLeft, ChevronRight } from 'lucide-react';
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import { type SharedData } from '@/types';
+import CustomerNavbar from '@/components/customer-navbar';
 import {
     Dialog,
     DialogContent,
@@ -155,36 +156,7 @@ export default function CustomerMenuPage() {
         <div className="min-h-screen bg-background">
             <Head title="Menu" />
             
-            {/* Navbar */}
-            <header className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-                        <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
-                            <UtensilsCrossed className="h-6 w-6" />
-                        </div>
-                        <span>Burger King Clone</span>
-                    </Link>
-
-                    <div className="flex items-center gap-4">
-                        <AppearanceToggleDropdown />
-                        
-                        {auth.user ? (
-                            <Link href="/dashboard">
-                                <Button>Dashboard</Button>
-                            </Link>
-                        ) : (
-                            <div className="flex items-center gap-2">
-                                <Link href="/login">
-                                    <Button variant="ghost">Log in</Button>
-                                </Link>
-                                <Link href="/register">
-                                    <Button>Sign up</Button>
-                                </Link>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                
+            <CustomerNavbar cartCount={cartCount}>
                 {/* Category Tabs */}
                 <div className="border-t bg-muted/30 overflow-x-auto">
                     <div className="container mx-auto px-4">
@@ -211,7 +183,7 @@ export default function CustomerMenuPage() {
                         </div>
                     </div>
                 </div>
-            </header>
+            </CustomerNavbar>
 
             <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4 sm:p-8">
                 <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -219,7 +191,7 @@ export default function CustomerMenuPage() {
                         <h1 className="text-3xl font-bold tracking-tight">
                             {categoryFilter || 'Our Menu'}
                         </h1>
-                        <p className="text-muted-foreground mt-1">Flame-grilled burgers, fresh sides, and more.</p>
+                        <p className="text-muted-foreground mt-1">Freshly brewed coffee, delicious pastries, and more.</p>
                     </div>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                         <Input

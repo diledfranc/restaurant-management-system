@@ -22,6 +22,10 @@ Route::get('/shop', function () {
     return Inertia::render('customer/menu');
 })->name('shop.menu');
 
+Route::get('/cart', function () {
+    return Inertia::render('customer/cart');
+})->name('shop.cart');
+
 Route::get('/shop/checkout', function () {
     return Inertia::render('customer/checkout');
 })->name('shop.checkout');

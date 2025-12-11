@@ -1,16 +1,8 @@
 import { Head } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
+import CustomerLayout from '@/layouts/customer-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { type BreadcrumbItem } from '@/types';
 import { useEffect, useState } from 'react';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'My Orders',
-        href: '/customer/orders',
-    },
-];
 
 interface Order {
     id: number;
@@ -70,10 +62,10 @@ export default function CustomerOrders() {
     }, []);
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <CustomerLayout>
             <Head title="My Orders" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="flex items-center justify-between">
+            <div className="container mx-auto p-4 sm:p-8">
+                <div className="flex items-center justify-between mb-6">
                     <div>
                         <h1 className="text-2xl font-bold">My Orders</h1>
                         <p className="text-sm text-muted-foreground">
@@ -82,7 +74,7 @@ export default function CustomerOrders() {
                     </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 max-w-3xl mx-auto">
                     {loading && <p className="text-sm text-muted-foreground">Loading orders...</p>}
                     
                     {!loading && orders.length === 0 && (
@@ -148,6 +140,6 @@ export default function CustomerOrders() {
                     ))}
                 </div>
             </div>
-        </AppLayout>
+        </CustomerLayout>
     );
 }

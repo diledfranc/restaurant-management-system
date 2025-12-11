@@ -4,57 +4,17 @@ import { ArrowRight, UtensilsCrossed, ChefHat, Star } from 'lucide-react';
 import { type SharedData } from '@/types';
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import * as shop from '@/routes/shop';
+import CustomerNavbar from '@/components/customer-navbar';
 
 export default function Welcome() {
     const { auth } = usePage<SharedData>().props;
 
     return (
         <>
-            <Head title="Welcome to Burger King Clone" />
+            <Head title="Welcome to Coffee Shop Management" />
             
             <div className="min-h-screen bg-background text-foreground flex flex-col">
-                {/* Navbar */}
-                <header className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                    <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                        <div className="flex items-center gap-2 font-bold text-xl">
-                            <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
-                                <UtensilsCrossed className="h-6 w-6" />
-                            </div>
-                            <span>Burger King Clone</span>
-                        </div>
-
-                        <nav className="hidden md:flex items-center gap-6">
-                            <Link href={shop.menu().url} className="text-sm font-medium hover:text-primary transition-colors">
-                                Menu
-                            </Link>
-                            <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">
-                                Features
-                            </a>
-                            <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">
-                                About Us
-                            </a>
-                        </nav>
-
-                        <div className="flex items-center gap-4">
-                            <AppearanceToggleDropdown />
-                            
-                            {auth.user ? (
-                                <Link href="/dashboard">
-                                    <Button>Dashboard</Button>
-                                </Link>
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <Link href="/login">
-                                        <Button variant="ghost">Log in</Button>
-                                    </Link>
-                                    <Link href="/register">
-                                        <Button>Sign up</Button>
-                                    </Link>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </header>
+                <CustomerNavbar />
 
                 <main className="flex-1">
                     {/* Hero Section */}
@@ -66,7 +26,7 @@ export default function Welcome() {
                                     in Every Bite.
                                 </h1>
                                 <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-lg">
-                                    Fresh ingredients, flame-grilled perfection, and a menu crafted for cravings. Experience the best burgers in town.
+                                    Premium beans, expert baristas, and a cozy atmosphere. Experience the best coffee in town.
                                 </p>
                                 <div className="flex flex-col sm:flex-row gap-4">
                                     <Link href={shop.menu().url}>
