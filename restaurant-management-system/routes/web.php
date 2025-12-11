@@ -7,6 +7,8 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\PosController;
+use App\Http\Controllers\KitchenController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -49,6 +51,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reservations', function () {
             return Inertia::render('reservations/index');
         })->name('reservations.index');
+    });
+
+    // POS & Kitchen
+    Route::middleware(['role:cashier,manager,admin'])->group(function () {
+        Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
+    });
+
+    Route::middleware(['role:kitchen,manager,admin'])->group(function () {
+        Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
     });
 
     // Admin Management

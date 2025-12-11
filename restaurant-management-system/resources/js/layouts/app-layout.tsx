@@ -12,7 +12,7 @@ interface AppLayoutProps {
 export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => {
     const { auth } = usePage<SharedData>().props;
     const roles = auth.roles || [];
-    const isStaff = roles.some(role => ['admin', 'manager', 'staff'].includes(role));
+    const isStaff = roles.some(role => ['admin', 'manager', 'staff', 'cashier', 'kitchen'].includes(role));
 
     if (!isStaff) {
         return (

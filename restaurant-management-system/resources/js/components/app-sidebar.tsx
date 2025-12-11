@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, UtensilsCrossed, ShoppingCart, FileText, Truck, Users, Calendar, Home, User, Settings } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, UtensilsCrossed, ShoppingCart, FileText, Truck, Users, Calendar, Home, User, Settings, Monitor, Calculator } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const customerNavItems: NavItem[] = [
@@ -62,6 +62,8 @@ export function AppSidebar() {
         if (roles.includes('admin')) {
             return [
                 { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+                { title: 'POS System', href: '/pos', icon: Calculator },
+                { title: 'Kitchen Display', href: '/kitchen', icon: Monitor },
                 { title: 'Staff', href: '/staff', icon: Users },
                 { title: 'Activity Logs', href: '/logs', icon: FileText },
                 { title: 'Settings', href: '/settings', icon: Settings },
@@ -71,11 +73,26 @@ export function AppSidebar() {
         if (roles.includes('manager')) {
             return [
                 { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+                { title: 'POS System', href: '/pos', icon: Calculator },
+                { title: 'Kitchen Display', href: '/kitchen', icon: Monitor },
                 { title: 'Menu', href: '/menu', icon: UtensilsCrossed },
                 { title: 'Orders', href: '/orders', icon: ShoppingCart },
                 { title: 'Reports', href: '/reports', icon: FileText },
                 { title: 'Delivery', href: '/delivery', icon: Truck },
                 { title: 'Reservations', href: '/reservations', icon: Calendar },
+            ];
+        }
+
+        if (roles.includes('cashier')) {
+            return [
+                { title: 'POS System', href: '/pos', icon: Calculator },
+                { title: 'Orders', href: '/orders', icon: ShoppingCart },
+            ];
+        }
+
+        if (roles.includes('kitchen')) {
+            return [
+                { title: 'Kitchen Display', href: '/kitchen', icon: Monitor },
             ];
         }
 

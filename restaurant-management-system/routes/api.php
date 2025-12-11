@@ -6,6 +6,8 @@ use App\Http\Controllers\MenuItemController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\PosController;
+use App\Http\Controllers\KitchenController;
 use Illuminate\Support\Facades\Route;
 
 // Public auth
@@ -46,6 +48,16 @@ Route::middleware(['auth', 'web'])->group(function () {
     
     // Customer-specific: view their own orders
     Route::get('/customer/orders', [OrderController::class, 'customerOrders']);
+
+    // POS & Kitchen API
+    Route::middleware(['role:cashier,manager,admin'])->group(function () {
+        Route::post('/pos/orders', [PosController::class, 'store']);
+    });
+
+    Route::middleware(['role:kitchen,manager,admin'])->group(function () {
+        Route::get('/kitchen/orders', [KitchenController::class, 'apiIndex']);
+        Route::patch('/kitchen/orders/{order}/status', [KitchenController::class, 'updateStatus']);
+    });
 });
 
 // Deliveries
