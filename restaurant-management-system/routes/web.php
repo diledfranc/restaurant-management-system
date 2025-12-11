@@ -54,7 +54,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // POS & Kitchen
-    Route::middleware(['role:cashier,manager,admin'])->group(function () {
+    Route::middleware(['role:staff,cashier,manager,admin'])->group(function () {
         Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
     });
 

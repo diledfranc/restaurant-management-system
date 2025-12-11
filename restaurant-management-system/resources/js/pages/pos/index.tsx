@@ -17,6 +17,7 @@ interface MenuItem {
     name: string;
     price_cents: number;
     is_available: boolean;
+    image?: string;
 }
 
 interface Category {
@@ -158,12 +159,25 @@ export default function PosIndex({ categories }: { categories: Category[] }) {
                             {filteredItems.map(item => (
                                 <Card 
                                     key={item.id} 
-                                    className="cursor-pointer hover:bg-accent transition-colors"
+                                    className="cursor-pointer hover:bg-accent transition-colors overflow-hidden"
                                     onClick={() => addToCart(item)}
                                 >
-                                    <CardContent className="p-4 flex flex-col justify-between h-full">
-                                        <div className="font-medium text-sm line-clamp-2">{item.name}</div>
-                                        <div className="mt-2 text-sm font-bold text-primary">
+                                    <div className="aspect-square w-full bg-muted relative">
+                                        {item.image ? (
+                                            <img 
+                                                src={item.image} 
+                                                alt={item.name} 
+                                                className="object-cover w-full h-full"
+                                            />
+                                        ) : (
+                                            <div className="flex items-center justify-center w-full h-full text-muted-foreground">
+                                                <span className="text-xs">No Image</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <CardContent className="p-3 flex flex-col justify-between gap-2">
+                                        <div className="font-medium text-sm line-clamp-2 leading-tight">{item.name}</div>
+                                        <div className="text-sm font-bold text-primary">
                                             {formatCurrency(item.price_cents)}
                                         </div>
                                     </CardContent>

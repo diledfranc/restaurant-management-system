@@ -83,6 +83,7 @@ export function AppSidebar() {
 
         if (roles.includes('cashier')) {
             return [
+                { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
                 { title: 'POS System', href: '/pos', icon: Calculator },
                 { title: 'Orders', href: '/orders', icon: ShoppingCart },
             ];
@@ -97,6 +98,7 @@ export function AppSidebar() {
         if (roles.includes('staff')) {
             return [
                 { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+                { title: 'POS System', href: '/pos', icon: Calculator },
                 { title: 'Orders', href: '/orders', icon: ShoppingCart },
                 { title: 'Delivery', href: '/delivery', icon: Truck },
             ];

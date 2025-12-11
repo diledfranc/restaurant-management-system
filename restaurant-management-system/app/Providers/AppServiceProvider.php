@@ -23,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
     {
         RedirectIfAuthenticated::redirectUsing(function () {
             $user = Auth::user();
-            if ($user && ($user->hasRole('admin') || $user->hasRole('manager') || $user->hasRole('staff'))) {
+            if ($user && ($user->hasRole('admin') || $user->hasRole('manager') || $user->hasRole('staff') || $user->hasRole('cashier'))) {
                 return route('dashboard');
             }
             return route('shop.menu');

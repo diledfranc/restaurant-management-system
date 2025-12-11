@@ -8,10 +8,12 @@ import * as orders from '@/routes/orders';
 import * as reports from '@/routes/reports';
 import * as delivery from '@/routes/delivery';
 import * as reservations from '@/routes/reservations';
+import * as pos from '@/routes/pos';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, FileText, Settings, Utensils, ShoppingBag, Truck, BarChart3, Calendar } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Users, FileText, Settings, Utensils, ShoppingBag, Truck, BarChart3, Calendar, Calculator, Info } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -27,14 +29,19 @@ export default function Dashboard() {
     const isAdmin = roles.includes('admin');
     const isManager = roles.includes('manager');
     const isStaff = roles.includes('staff');
+    const isCashier = roles.includes('cashier');
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="p-6">
-                <h2 className="text-2xl font-bold mb-6">
-                    Welcome back, {auth.user.name}!
-                </h2>
+                <Alert className="mb-6 bg-muted/50 border-muted">
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Welcome back, {auth.user.name}!</AlertTitle>
+                    <AlertDescription>
+                        You are logged in as {roles.join(', ')}. Select an action below to get started.
+                    </AlertDescription>
+                </Alert>
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {/* Admin Dashboard */}
@@ -84,6 +91,19 @@ export default function Dashboard() {
                     {/* Manager Dashboard */}
                     {isManager && (
                         <>
+                            <Link href={pos.index().url}>
+                                <Card className="hover:bg-accent/50 transition-colors cursor-pointer h-full">
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">POS System</CardTitle>
+                                        <Calculator className="h-4 w-4 text-muted-foreground" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">Point of Sale</div>
+                                        <p className="text-xs text-muted-foreground">Create new orders</p>
+                                    </CardContent>
+                                </Card>
+                            </Link>
+
                             <Link href={menu.index().url}>
                                 <Card className="hover:bg-accent/50 transition-colors cursor-pointer h-full">
                                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -152,8 +172,21 @@ export default function Dashboard() {
                     )}
 
                     {/* Staff Dashboard (Subset of Manager) */}
-                    {isStaff && !isManager && (
+                    {(isStaff || isCashier) && !isManager && (
                         <>
+                            <Link href={pos.index().url}>
+                                <Card className="hover:bg-accent/50 transition-colors cursor-pointer h-full">
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">POS System</CardTitle>
+                                        <Calculator className="h-4 w-4 text-muted-foreground" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">Point of Sale</div>
+                                        <p className="text-xs text-muted-foreground">Create new orders</p>
+                                    </CardContent>
+                                </Card>
+                            </Link>
+
                             <Link href={orders.index().url}>
                                 <Card className="hover:bg-accent/50 transition-colors cursor-pointer h-full">
                                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
