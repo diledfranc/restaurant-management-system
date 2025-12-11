@@ -13,6 +13,15 @@ class StoreMenuCategoryRequest extends FormRequest
         return Gate::forUser($this->user())->allows('create', MenuCategory::class);
     }
 
+    public function prepareForValidation()
+    {
+        if ($this->has('name') && !$this->has('slug')) {
+            $this->merge([
+                'slug' => \Illuminate\Support\Str::slug($this->name),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [

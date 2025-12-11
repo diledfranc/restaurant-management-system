@@ -53,6 +53,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(Role::class, 'role_user');
     }
 
+    public function hasRole($role)
+    {
+        return $this->roles()->where('name', $role)->exists();
+    }
+
     /**
      * Convenience accessor to get the first role (used by controllers)
      */

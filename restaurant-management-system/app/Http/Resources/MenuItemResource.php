@@ -14,8 +14,9 @@ class MenuItemResource extends JsonResource
             'description' => $this->description,
             'price_cents' => $this->price_cents,
             'is_available'=> $this->is_available,
-            'image_url'   => $this->image_path ? url($this->image_path) : null,
+            'image_url'   => $this->image_path ? \Illuminate\Support\Facades\Storage::url($this->image_path) : null,
             'category'    => $this->category?->name,
+            'category_id' => $this->category_id,
             'created_at'  => $this->created_at,
         ];
     }

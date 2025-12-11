@@ -7,6 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog';
 import { Trash2, RefreshCw } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -78,6 +86,8 @@ export default function OrdersIndex() {
     const { orders, filters } = usePage<OrdersPageProps>().props;
     const [statusFilter, setStatusFilter] = useState(filters?.status ?? '__all');
     const [loadingIds, setLoadingIds] = useState<number[]>([]);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [orderToDelete, setOrderToDelete] = useState<number | null>(null);
 
     const handleFilterChange = (value: string) => {
         setStatusFilter(value);

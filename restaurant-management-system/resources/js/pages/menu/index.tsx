@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Spinner } from '@/components/ui/spinner';
 import InputError from '@/components/input-error';
 import { Trash2, Edit, Plus } from 'lucide-react';
@@ -32,6 +33,7 @@ interface MenuItem {
     category_id: number;
     is_available: boolean;
     image_path?: string;
+    image_url?: string;
     created_at: string;
 }
 
@@ -73,13 +75,22 @@ export default function MenuIndex() {
         price_cents: '',
         category_id: '',
         is_available: true,
+        image: null as File | null,
+        image_url: null as string | null,
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
+    
+    // Bulk delete state
+    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
+    const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
     // Category management state
     const [manageCategoriesOpen, setManageCategoriesOpen] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [categoryProcessing, setCategoryProcessing] = useState(false);
+    const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
+    const [categoryDeleteDialogOpen, setCategoryDeleteDialogOpen] = useState(false);
 
     const getCsrfToken = (): string => {
         const value = `; ${document.cookie}`;
@@ -88,24 +99,83 @@ export default function MenuIndex() {
         return document.querySelector('[name="csrf-token"]')?.getAttribute('content') || '';
     };
 
+    const toggleSelection = (id: number) => {
+        setSelectedItems(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedItems.length === items.data.length) {
+            setSelectedItems([]);
+        } else {
+            setSelectedItems(items.data.map(i => i.id));
+        }
+    };
+
+    const handleBulkDelete = () => {
+        setBulkDeleteDialogOpen(true);
+    };
+
+    const confirmBulkDelete = async () => {
+        setBulkDeleting(true);
+        try {
+            const res = await fetch('/api/menu-items/bulk-delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-XSRF-TOKEN': getCsrfToken(),
+                },
+                body: JSON.stringify({ ids: selectedItems }),
+            });
+
+            if (res.ok) {
+                setSelectedItems([]);
+                setBulkDeleteDialogOpen(false);
+                router.reload();
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to delete items');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('An error occurred');
+        } finally {
+            setBulkDeleting(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setErrors({});
 
         const price_cents = Math.round(parseFloat(formData.price_cents) * 100);
-        const method = editingId ? 'PUT' : 'POST';
         const url = editingId ? `/api/menu-items/${editingId}` : '/api/menu-items';
+
+        const data = new FormData();
+        data.append('name', formData.name);
+        data.append('description', formData.description);
+        data.append('price_cents', String(price_cents));
+        data.append('category_id', formData.category_id);
+        data.append('is_available', formData.is_available ? '1' : '0');
+        
+        if (formData.image) {
+            data.append('image', formData.image);
+        }
+
+        if (editingId) {
+            data.append('_method', 'PUT');
+        }
 
         try {
             const response = await fetch(url, {
-                method,
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-XSRF-TOKEN': getCsrfToken(),
                 },
-                body: JSON.stringify({ ...formData, price_cents }),
+                body: data,
             });
 
             if (!response.ok) {
@@ -119,6 +189,8 @@ export default function MenuIndex() {
                     price_cents: '',
                     category_id: '',
                     is_available: true,
+                    image: null,
+                    image_url: null,
                 });
                 setEditingId(null);
                 router.reload();
@@ -172,6 +244,8 @@ export default function MenuIndex() {
             price_cents: String(item.price_cents / 100),
             category_id: String(item.category_id),
             is_available: item.is_available,
+            image: null,
+            image_url: item.image_url || null,
         });
         setOpen(true);
     };
@@ -184,6 +258,8 @@ export default function MenuIndex() {
             price_cents: '',
             category_id: '',
             is_available: true,
+            image: null,
+            image_url: null,
         });
         setErrors({});
     };
@@ -206,19 +282,28 @@ export default function MenuIndex() {
             if (response.ok) {
                 setNewCategoryName('');
                 router.reload({ only: ['categories'] });
+            } else {
+                const data = await response.json();
+                alert(data.message || 'Failed to add category');
             }
         } catch (error) {
             console.error('Error adding category:', error);
+            alert('An error occurred while adding the category');
         } finally {
             setCategoryProcessing(false);
         }
     };
 
-    const handleDeleteCategory = async (id: number) => {
-        if (!confirm('Delete this category? Items in this category may become uncategorized.')) return;
+    const handleDeleteCategory = (id: number) => {
+        setCategoryToDelete(id);
+        setCategoryDeleteDialogOpen(true);
+    };
+
+    const confirmDeleteCategory = async () => {
+        if (categoryToDelete === null) return;
         setCategoryProcessing(true);
         try {
-            const response = await fetch(`/api/categories/${id}`, {
+            const response = await fetch(`/api/categories/${categoryToDelete}`, {
                 method: 'DELETE',
                 headers: {
                     'Accept': 'application/json',
@@ -227,10 +312,16 @@ export default function MenuIndex() {
             });
 
             if (response.ok) {
+                setCategoryDeleteDialogOpen(false);
+                setCategoryToDelete(null);
                 router.reload({ only: ['categories', 'items'] });
+            } else {
+                const data = await response.json();
+                alert(data.message || 'Failed to delete category');
             }
         } catch (error) {
             console.error('Error deleting category:', error);
+            alert('An error occurred while deleting the category');
         } finally {
             setCategoryProcessing(false);
         }
@@ -246,6 +337,12 @@ export default function MenuIndex() {
                         <p className="text-sm text-muted-foreground">Manage your restaurant menu</p>
                     </div>
                     <div className="flex gap-2">
+                        {selectedItems.length > 0 && (
+                            <Button variant="destructive" onClick={handleBulkDelete}>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Selected ({selectedItems.length})
+                            </Button>
+                        )}
                         <Button variant="outline" onClick={() => setManageCategoriesOpen(true)}>
                             Manage Categories
                         </Button>
@@ -316,6 +413,21 @@ export default function MenuIndex() {
                                         </select>
                                         {errors.category_id && <InputError message={errors.category_id} />}
                                     </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="image">Image</Label>
+                                        {formData.image_url && (
+                                            <div className="mb-2">
+                                                <img src={formData.image_url} alt="Current" className="h-20 w-20 object-cover rounded-md" />
+                                            </div>
+                                        )}
+                                        <Input
+                                            id="image"
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setFormData({ ...formData, image: e.target.files ? e.target.files[0] : null })}
+                                        />
+                                        {errors.image && <InputError message={errors.image} />}
+                                    </div>
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="checkbox"
@@ -368,9 +480,30 @@ export default function MenuIndex() {
                     {items.data.length > 0 ? (
                         items.data.map((item) => (
                             <Card key={item.id} className={!item.is_available ? 'opacity-60' : ''}>
+                                {item.image_url && (
+                                    <div className="aspect-video w-full overflow-hidden bg-muted rounded-t-xl">
+                                        <img
+                                            src={item.image_url}
+                                            alt={item.name}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    </div>
+                                )}
                                 <CardHeader>
                                     <div className="flex items-start justify-between">
-                                        <CardTitle className="line-clamp-2">{item.name}</CardTitle>
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                checked={selectedItems.includes(item.id)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setSelectedItems([...selectedItems, item.id]);
+                                                    } else {
+                                                        setSelectedItems(selectedItems.filter((id) => id !== item.id));
+                                                    }
+                                                }}
+                                            />
+                                            <CardTitle className="line-clamp-2">{item.name}</CardTitle>
+                                        </div>
                                         {!item.is_available && (
                                             <span className="text-xs font-semibold text-gray-500">Unavailable</span>
                                         )}
@@ -450,6 +583,66 @@ export default function MenuIndex() {
                                     </>
                                 ) : (
                                     'Delete'
+                                )}
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Bulk Delete Confirmation Dialog */}
+                <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Confirm Bulk Deletion</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete {selectedItems.length} items? This action cannot be undone.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex gap-3 justify-end pt-4">
+                            <Button variant="outline" onClick={() => setBulkDeleteDialogOpen(false)} disabled={bulkDeleting}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={confirmBulkDelete}
+                                disabled={bulkDeleting}
+                            >
+                                {bulkDeleting ? (
+                                    <>
+                                        <Spinner className="mr-2" /> Deleting...
+                                    </>
+                                ) : (
+                                    'Delete Selected'
+                                )}
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Category Delete Confirmation Dialog */}
+                <Dialog open={categoryDeleteDialogOpen} onOpenChange={setCategoryDeleteDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete Category</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete this category? Items in this category may become uncategorized.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex gap-3 justify-end pt-4">
+                            <Button variant="outline" onClick={() => setCategoryDeleteDialogOpen(false)} disabled={categoryProcessing}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={confirmDeleteCategory}
+                                disabled={categoryProcessing}
+                            >
+                                {categoryProcessing ? (
+                                    <>
+                                        <Spinner className="mr-2" /> Deleting...
+                                    </>
+                                ) : (
+                                    'Delete Category'
                                 )}
                             </Button>
                         </div>

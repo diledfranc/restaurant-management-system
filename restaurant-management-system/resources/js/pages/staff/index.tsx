@@ -47,6 +47,8 @@ export default function StaffIndex({ users, availableRoles }: Props) {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
     const addForm = useForm({
         name: '',
@@ -87,8 +89,18 @@ export default function StaffIndex({ users, availableRoles }: Props) {
     };
 
     const handleDelete = (user: User) => {
-        if (confirm(`Are you sure you want to delete ${user.name}?`)) {
-            router.delete(`/staff/${user.id}`);
+        setUserToDelete(user);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (userToDelete) {
+            router.delete(`/staff/${userToDelete.id}`, {
+                onSuccess: () => {
+                    setDeleteDialogOpen(false);
+                    setUserToDelete(null);
+                }
+            });
         }
     };
 
@@ -309,6 +321,25 @@ export default function StaffIndex({ users, availableRoles }: Props) {
                                 </Button>
                             </DialogFooter>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete Staff Member</DialogTitle>
+                        </DialogHeader>
+                        <div className="py-4">
+                            Are you sure you want to delete {userToDelete?.name}? This action cannot be undone.
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button variant="destructive" onClick={confirmDelete}>
+                                Delete
+                            </Button>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>

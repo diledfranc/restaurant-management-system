@@ -28,6 +28,7 @@ Route::get('/menu-categories/{menuCategory}', [MenuCategoryController::class, 's
 
 // Protected routes for management actions — policies enforce manager/admin
 Route::middleware(['auth', 'web'])->group(function () {
+    Route::post('/menu-items/bulk-delete', [MenuItemController::class, 'bulkDestroy']);
     Route::apiResource('categories', MenuCategoryController::class)->except(['index','show']);
     Route::apiResource('menu-items', MenuItemController::class)->except(['index','show']);
     Route::get('/reports/sales', [\App\Http\Controllers\ReportController::class, 'sales']);
