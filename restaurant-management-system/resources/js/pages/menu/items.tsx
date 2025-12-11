@@ -97,7 +97,7 @@ export default function MenuItemsPage() {
                                 </CardHeader>
                                 <CardContent>
                                     {item.description && <p className="text-sm text-muted-foreground mb-2">{item.description}</p>}
-                                    <p className="text-lg font-bold mb-2">${(item.price_cents / 100).toFixed(2)}</p>
+                                    <p className="text-lg font-bold mb-2">฿{(item.price_cents / 100).toFixed(2)}</p>
                                     <div className="flex gap-2">
                                         <Button variant="outline" size="sm">Edit</Button>
                                         <Button

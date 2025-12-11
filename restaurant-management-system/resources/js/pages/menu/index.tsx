@@ -513,7 +513,7 @@ export default function MenuIndex() {
                                     {item.description && (
                                         <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                                     )}
-                                    <p className="text-2xl font-bold">${(item.price_cents / 100).toFixed(2)}</p>
+                                    <p className="text-2xl font-bold">฿{(item.price_cents / 100).toFixed(2)}</p>
                                     <div className="flex gap-2">
                                         <Button
                                             variant="outline"

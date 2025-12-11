@@ -21,7 +21,7 @@ interface CartLine {
     quantity: number;
 }
 
-const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
 const CART_KEY = 'customer_cart';
 
 export default function CartPage() {

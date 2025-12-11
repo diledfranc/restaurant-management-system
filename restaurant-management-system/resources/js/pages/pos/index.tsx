@@ -34,7 +34,7 @@ interface CartItem {
     notes: string;
 }
 
-const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
 
 export default function PosIndex({ categories }: { categories: Category[] }) {
     const [cart, setCart] = useState<CartItem[]>([]);

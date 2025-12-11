@@ -35,7 +35,7 @@ type ReportsPageProps = {
     lowSelling: LowSellingRow[];
 };
 
-const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
 
 export default function ReportsIndex() {
     const { summary, sales, lowSelling } = usePage<ReportsPageProps>().props;

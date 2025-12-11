@@ -15,7 +15,7 @@ interface CartLine {
 }
 
 const CART_KEY = 'customer_cart';
-const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
 
 export default function CustomerCheckoutPage() {
     const [cart, setCart] = useState<CartLine[]>([]);

@@ -54,7 +54,7 @@ const statusLabels: Record<string, string> = {
 
 const formatCurrency = (cents?: number) => {
     if (cents === undefined) return '—';
-    return `$${(cents / 100).toFixed(2)}`;
+    return `฿${(cents / 100).toFixed(2)}`;
 };
 
 export default function DeliveryPage() {

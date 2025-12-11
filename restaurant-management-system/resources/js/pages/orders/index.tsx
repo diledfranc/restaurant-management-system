@@ -90,7 +90,7 @@ const statusLabels: Record<string, string> = {
 
 const statusOptions = Object.keys(statusLabels);
 
-const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
 
 export default function OrdersIndex() {
     const { orders, filters } = usePage<OrdersPageProps>().props;

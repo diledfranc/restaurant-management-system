@@ -20,7 +20,7 @@ interface Order {
     }>;
 }
 
-const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
 
 const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
