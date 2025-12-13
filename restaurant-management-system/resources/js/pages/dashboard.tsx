@@ -54,7 +54,14 @@ interface DashboardProps extends SharedData {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
-export default function Dashboard({ orders = [], stats, best_selling = [], low_selling = [], sales_chart = [], category_sales = [] }: DashboardProps) {
+export default function Dashboard({ 
+    orders = [], 
+    stats = { total_sales: 0, total_orders: 0, avg_order_value: 0 }, 
+    best_selling = [], 
+    low_selling = [], 
+    sales_chart = [], 
+    category_sales = [] 
+}: DashboardProps) {
     const { auth } = usePage<SharedData>().props;
     const roles = (auth.roles as string[]) || [];
 
