@@ -24,7 +24,7 @@ export default function MenuCategoriesPage() {
         const fetchCategories = async () => {
             setLoading(true);
             try {
-                const response = await fetch('/api/categories');
+                const response = await fetch('/api/categories?all=true');
                 if (response.ok) {
                     const data = await response.json();
                     setCategories(Array.isArray(data?.data) ? data.data : data);

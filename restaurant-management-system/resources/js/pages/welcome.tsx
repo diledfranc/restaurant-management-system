@@ -11,7 +11,7 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Welcome to Coffee Shop Management" />
+            <Head title="Welcome to MOMO" />
             
             <div className="min-h-screen bg-background text-foreground flex flex-col">
                 <CustomerNavbar />

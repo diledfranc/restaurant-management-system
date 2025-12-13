@@ -40,16 +40,16 @@ const customerNavItems: NavItem[] = [
 ];
 
 const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
+    // {
+    //     title: 'Repository',
+    //     href: 'https://github.com/laravel/react-starter-kit',
+    //     icon: Folder,
+    // },
+    // {
+    //     title: 'Documentation',
+    //     href: 'https://laravel.com/docs/starter-kits#react',
+    //     icon: BookOpen,
+    // },
 ];
 
 export function AppSidebar() {
@@ -71,8 +71,6 @@ export function AppSidebar() {
         if (roles.includes('manager')) {
             return [
                 { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
-                { title: 'POS System', href: '/pos', icon: Calculator },
-                { title: 'Kitchen Display', href: '/kitchen', icon: Monitor },
                 { title: 'Menu', href: '/menu', icon: UtensilsCrossed },
                 { title: 'Orders', href: '/orders', icon: ShoppingCart },
                 { title: 'Reports', href: '/reports', icon: FileText },

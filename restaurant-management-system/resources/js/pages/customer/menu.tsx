@@ -233,7 +233,7 @@ export default function CustomerMenuPage() {
                                         )}
                                     </CardHeader>
                                     <CardContent className="flex-1 pb-3">
-                                        <p className="text-sm text-muted-foreground line-clamp-3">{item.description || 'No description available.'}</p>
+                                        <p className="text-sm text-muted-foreground line-clamp-3 h-[3.75rem]">{item.description || 'No description available.'}</p>
                                     </CardContent>
                                     <CardFooter className="pt-0">
                                         <Button className="w-full" onClick={() => addToCart(item)}>

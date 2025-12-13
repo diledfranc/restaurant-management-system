@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { UtensilsCrossed, User, ShoppingBag, LogOut, Menu, Globe } from 'lucide-react';
+import AppLogoIcon from '@/components/app-logo-icon';
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import { type SharedData } from '@/types';
 import {
@@ -68,9 +69,9 @@ export default function CustomerNavbar({ children, cartCount = 0, onCartClick }:
                                 <SheetHeader>
                                     <SheetTitle className="flex items-center gap-2">
                                         <div className="bg-primary text-primary-foreground p-1 rounded-md">
-                                            <UtensilsCrossed className="h-5 w-5" />
+                                            <AppLogoIcon className="h-5 w-5 fill-current" />
                                         </div>
-                                        Coffee Shop Management
+                                        MOMO
                                     </SheetTitle>
                                 </SheetHeader>
                                 <div className="grid gap-4 py-6">
@@ -91,9 +92,9 @@ export default function CustomerNavbar({ children, cartCount = 0, onCartClick }:
 
                         <Link href="/" className="flex items-center gap-2 font-bold text-xl">
                             <div className="bg-primary text-primary-foreground p-1.5 rounded-md hidden sm:block">
-                                <UtensilsCrossed className="h-6 w-6" />
+                                <AppLogoIcon className="h-6 w-6 fill-current" />
                             </div>
-                            <span>Coffee Shop Management</span>
+                            <span>MOMO</span>
                         </Link>
                     </div>
 
