@@ -130,7 +130,6 @@ export default function ReportsIndex() {
                         </CardContent>
                     </Card>
                 </div>
-                </div>
 
                 <Card className="col-span-full">
                     <CardHeader>
