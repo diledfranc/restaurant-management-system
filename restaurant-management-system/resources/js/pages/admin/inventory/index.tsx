@@ -7,8 +7,18 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Archive, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import ReceiveStockDialog from './receive-stock-dialog';
+import LogWasteDialog from './log-waste-dialog';
+
+interface IngredientBatch {
+    id: number;
+    batch_number: string | null;
+    quantity: number;
+    expiration_date: string | null;
+    received_at: string;
+}
 
 interface Ingredient {
     id: number;
@@ -17,10 +27,13 @@ interface Ingredient {
     current_stock: number;
     reorder_level: number;
     cost_per_unit_cents: number;
+    batches?: IngredientBatch[];
 }
 
 export default function InventoryIndex({ ingredients }: { ingredients: Ingredient[] }) {
     const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
+    const [receivingIngredient, setReceivingIngredient] = useState<Ingredient | null>(null);
+    const [wastingIngredient, setWastingIngredient] = useState<Ingredient | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [showLowStockOnly, setShowLowStockOnly] = useState(false);
 
@@ -139,6 +152,12 @@ export default function InventoryIndex({ ingredients }: { ingredients: Ingredien
                                         <TableCell>{(ingredient.cost_per_unit_cents / 100).toFixed(2)}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
+                                                <Button variant="ghost" size="icon" title="Receive Stock" onClick={() => setReceivingIngredient(ingredient)}>
+                                                    <Archive className="h-4 w-4 text-green-600" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" title="Log Waste" onClick={() => setWastingIngredient(ingredient)}>
+                                                    <AlertTriangle className="h-4 w-4 text-orange-500" />
+                                                </Button>
                                                 <Button variant="ghost" size="icon" onClick={() => openEdit(ingredient)}>
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
@@ -228,6 +247,18 @@ export default function InventoryIndex({ ingredients }: { ingredients: Ingredien
                         </form>
                     </DialogContent>
                 </Dialog>
+
+                <ReceiveStockDialog 
+                    ingredient={receivingIngredient} 
+                    isOpen={!!receivingIngredient} 
+                    onClose={() => setReceivingIngredient(null)} 
+                />
+
+                <LogWasteDialog 
+                    ingredient={wastingIngredient} 
+                    isOpen={!!wastingIngredient} 
+                    onClose={() => setWastingIngredient(null)} 
+                />
             </div>
         </AppLayout>
     );

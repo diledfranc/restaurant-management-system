@@ -46,6 +46,22 @@ class ReportController extends Controller
             ->orderBy('day', 'asc')
             ->get();
 
+        $costRows = OrderItem::selectRaw("DATE(orders.created_at) as day, SUM(order_items.cost_cents) as total_cost")
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereBetween('orders.created_at', [$from->startOfDay(), $to->endOfDay()])
+            ->where('orders.status', '!=', 'cancelled')
+            ->groupBy('day')
+            ->get()
+            ->keyBy('day');
+
+        // Merge cost into sales rows
+        $salesRows->transform(function ($row) use ($costRows) {
+            $cost = $costRows->get($row->day)?->total_cost ?? 0;
+            $row->total_cost = $cost;
+            $row->gross_profit = $row->total_cents - $cost;
+            return $row;
+        });
+
         $topSellingRows = OrderItem::select('menu_item_id', DB::raw('SUM(quantity) as total_sold'))
             ->whereHas('order', function ($q) use ($from, $to) {
                 $q->whereBetween('created_at', [$from->startOfDay(), $to->endOfDay()])
@@ -86,10 +102,15 @@ class ReportController extends Controller
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
             'total_cents' => (int) $salesRows->sum('total_cents'),
+            'total_cost' => (int) $salesRows->sum('total_cost'),
+            'gross_profit' => (int) $salesRows->sum('gross_profit'),
             'orders_count' => (int) $salesRows->sum('orders_count'),
         ];
         $summary['avg_order_cents'] = $summary['orders_count'] > 0
             ? (int) floor($summary['total_cents'] / $summary['orders_count'])
+            : 0;
+        $summary['profit_margin'] = $summary['total_cents'] > 0
+            ? round(($summary['gross_profit'] / $summary['total_cents']) * 100, 2)
             : 0;
 
         return Inertia::render('reports/index', [

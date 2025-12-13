@@ -26,6 +26,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 type SalesRow = {
     day: string;
     total_cents: number;
+    total_cost: number;
+    gross_profit: number;
     orders_count: number;
 };
 
@@ -40,8 +42,11 @@ type ReportsPageProps = {
         from: string;
         to: string;
         total_cents: number;
+        total_cost: number;
+        gross_profit: number;
         orders_count: number;
         avg_order_cents: number;
+        profit_margin: number;
     };
     sales: SalesRow[];
     topSelling: ItemRow[];
@@ -64,6 +69,8 @@ export default function ReportsIndex() {
     const salesData = sales.map(s => ({
         ...s,
         revenue: s.total_cents / 100,
+        cost: s.total_cost / 100,
+        profit: s.gross_profit / 100,
     }));
 
     return (
@@ -88,13 +95,22 @@ export default function ReportsIndex() {
                     </div>
                 </form>
 
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-4">
                     <Card>
                         <CardHeader>
                             <CardTitle>Total revenue</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <p className="text-2xl font-bold">{formatCurrency(summary.total_cents)}</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Gross Profit</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-2xl font-bold text-green-600">{formatCurrency(summary.gross_profit)}</p>
+                            <p className="text-xs text-muted-foreground">Margin: {summary.profit_margin}%</p>
                         </CardContent>
                     </Card>
                     <Card>
@@ -114,22 +130,23 @@ export default function ReportsIndex() {
                         </CardContent>
                     </Card>
                 </div>
+                </div>
 
                 <Card className="col-span-full">
                     <CardHeader>
-                        <CardTitle>Sales Trend</CardTitle>
+                        <CardTitle>Financial Trend</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={salesData}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="day" />
-                                <YAxis yAxisId="left" />
-                                <YAxis yAxisId="right" orientation="right" />
-                                <Tooltip formatter={(value: any, name: any) => [name === 'revenue' ? `฿${value}` : value, name === 'revenue' ? 'Revenue' : 'Orders']} />
+                                <YAxis />
+                                <Tooltip formatter={(value: any) => [`฿${value}`, '']} />
                                 <Legend />
-                                <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#8884d8" activeDot={{ r: 8 }} name="Revenue" />
-                                <Line yAxisId="right" type="monotone" dataKey="orders_count" stroke="#82ca9d" name="Orders" />
+                                <Line type="monotone" dataKey="revenue" stroke="#8884d8" name="Revenue" />
+                                <Line type="monotone" dataKey="cost" stroke="#ff7300" name="Cost" />
+                                <Line type="monotone" dataKey="profit" stroke="#82ca9d" name="Profit" />
                             </LineChart>
                         </ResponsiveContainer>
                     </CardContent>

@@ -28,4 +28,11 @@ class Modifier extends Model
             ->withPivot('quantity')
             ->withTimestamps();
     }
+
+    public function getCostCentsAttribute()
+    {
+        return $this->ingredients->sum(function ($ingredient) {
+            return $ingredient->cost_per_unit_cents * $ingredient->pivot->quantity;
+        });
+    }
 }

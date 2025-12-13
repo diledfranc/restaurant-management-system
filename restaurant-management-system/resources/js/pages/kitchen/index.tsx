@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, CheckCircle, RefreshCw } from 'lucide-react';
+import { Clock, CheckCircle, RefreshCw, ChefHat, ArrowRight } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
+import { formatDistanceToNow } from 'date-fns';
+
+interface Modifier {
+    id: number;
+    name: string;
+    price_cents: number;
+}
 
 interface OrderItem {
     id: number;
@@ -13,6 +20,7 @@ interface OrderItem {
     };
     quantity: number;
     notes?: string;
+    modifiers?: Modifier[];
 }
 
 interface Order {
@@ -21,6 +29,7 @@ interface Order {
     status: string;
     created_at: string;
     items: OrderItem[];
+    table_number?: string; // Assuming we might have this later
 }
 
 export default function KitchenIndex() {
@@ -44,118 +53,175 @@ export default function KitchenIndex() {
         }
     };
 
-    useEffect(() => {
-        fetchOrders();
-        const interval = setInterval(fetchOrders, 15000); // Poll every 15s
-        return () => clearInterval(interval);
-    }, []);
-
     const updateStatus = async (orderId: number, status: string) => {
         try {
             const res = await fetch(`/api/kitchen/orders/${orderId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-XSRF-TOKEN': document.querySelector('[name="csrf-token"]')?.getAttribute('content') || '',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || ''
                 },
-                body: JSON.stringify({ status }),
+                body: JSON.stringify({ status })
             });
-
+            
             if (res.ok) {
-                fetchOrders(); // Refresh immediately
+                fetchOrders();
             }
         } catch (error) {
             console.error('Failed to update status', error);
         }
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'placed': return 'bg-yellow-500';
-            case 'preparing': return 'bg-blue-500';
-            case 'ready': return 'bg-green-500';
-            default: return 'bg-gray-500';
-        }
-    };
+    useEffect(() => {
+        fetchOrders();
+        const interval = setInterval(fetchOrders, 10000); // Poll every 10s
+        return () => clearInterval(interval);
+    }, []);
+
+    const placedOrders = orders.filter(o => o.status === 'placed');
+    const preparingOrders = orders.filter(o => o.status === 'preparing');
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Kitchen Display', href: '/kitchen' }]}>
-            <Head title="Kitchen Display" />
+        <AppLayout>
+            <Head title="Kitchen Display System" />
             
-            <div className="p-6 space-y-6">
-                <div className="flex justify-between items-center">
-                    <div className="space-y-1">
-                        <h1 className="text-2xl font-bold">Kitchen Display System</h1>
-                        <p className="text-sm text-muted-foreground flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            Last updated: {lastUpdated.toLocaleTimeString()}
-                        </p>
+            <div className="p-6 h-[calc(100vh-65px)] flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-3">
+                        <ChefHat className="h-8 w-8 text-orange-600" />
+                        <h1 className="text-2xl font-bold text-gray-800">Kitchen Display System</h1>
                     </div>
-                    <Button variant="outline" onClick={fetchOrders} disabled={loading}>
-                        <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                        Refresh
-                    </Button>
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm text-gray-500">
+                            Last updated: {lastUpdated.toLocaleTimeString()}
+                        </span>
+                        <Button variant="outline" size="sm" onClick={fetchOrders} disabled={loading}>
+                            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </Button>
+                    </div>
                 </div>
 
-                {orders.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-64 text-muted-foreground border rounded-xl bg-muted/10">
-                        <CheckCircle className="h-12 w-12 mb-4 opacity-20" />
-                        <p className="text-lg">All caught up! No active orders.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-hidden">
+                    {/* New Orders Column */}
+                    <div className="flex flex-col bg-gray-50 rounded-lg border border-gray-200 h-full">
+                        <div className="p-4 border-b border-gray-200 bg-white rounded-t-lg flex justify-between items-center">
+                            <h2 className="font-semibold text-lg flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                New Orders
+                            </h2>
+                            <Badge variant="secondary">{placedOrders.length}</Badge>
+                        </div>
+                        <div className="p-4 overflow-y-auto flex-1 space-y-4">
+                            {placedOrders.length === 0 ? (
+                                <div className="text-center py-10 text-gray-400">
+                                    No new orders
+                                </div>
+                            ) : (
+                                placedOrders.map(order => (
+                                    <OrderCard 
+                                        key={order.id} 
+                                        order={order} 
+                                        onAction={() => updateStatus(order.id, 'preparing')}
+                                        actionLabel="Start Preparing"
+                                        actionColor="default"
+                                    />
+                                ))
+                            )}
+                        </div>
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {orders.map(order => (
-                            <Card key={order.id} className="border-2 overflow-hidden flex flex-col">
-                                <div className={`h-2 w-full ${getStatusColor(order.status)}`} />
-                                <CardHeader className="pb-2">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <CardTitle className="text-xl">#{order.id}</CardTitle>
-                                            <p className="font-medium text-muted-foreground">{order.guest_name || 'Guest'}</p>
-                                        </div>
-                                        <Badge variant={order.status === 'placed' ? 'destructive' : 'default'}>
-                                            {order.status.toUpperCase()}
-                                        </Badge>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                        {new Date(order.created_at).toLocaleTimeString()}
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="flex-1 flex flex-col gap-4">
-                                    <div className="space-y-2 flex-1">
-                                        {order.items.map(item => (
-                                            <div key={item.id} className="flex justify-between items-start text-sm border-b pb-2 last:border-0">
-                                                <div className="font-medium">
-                                                    <span className="text-lg font-bold mr-2">{item.quantity}x</span>
-                                                    {item.menu_item.name}
-                                                </div>
-                                                {item.notes && (
-                                                    <div className="text-xs text-amber-600 font-medium mt-1 bg-amber-50 p-1 rounded">
-                                                        Note: {item.notes}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    
-                                    <div className="pt-2 mt-auto">
-                                        {order.status === 'placed' && (
-                                            <Button className="w-full" onClick={() => updateStatus(order.id, 'preparing')}>
-                                                Start Preparing
-                                            </Button>
-                                        )}
-                                        {order.status === 'preparing' && (
-                                            <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => updateStatus(order.id, 'ready')}>
-                                                Mark Ready
-                                            </Button>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+
+                    {/* Preparing Column */}
+                    <div className="flex flex-col bg-gray-50 rounded-lg border border-gray-200 h-full">
+                        <div className="p-4 border-b border-gray-200 bg-white rounded-t-lg flex justify-between items-center">
+                            <h2 className="font-semibold text-lg flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                                Preparing
+                            </h2>
+                            <Badge variant="secondary">{preparingOrders.length}</Badge>
+                        </div>
+                        <div className="p-4 overflow-y-auto flex-1 space-y-4">
+                            {preparingOrders.length === 0 ? (
+                                <div className="text-center py-10 text-gray-400">
+                                    No orders in preparation
+                                </div>
+                            ) : (
+                                preparingOrders.map(order => (
+                                    <OrderCard 
+                                        key={order.id} 
+                                        order={order} 
+                                        onAction={() => updateStatus(order.id, 'ready')}
+                                        actionLabel="Mark Ready"
+                                        actionColor="success"
+                                    />
+                                ))
+                            )}
+                        </div>
                     </div>
-                )}
+                </div>
             </div>
         </AppLayout>
+    );
+}
+
+function OrderCard({ order, onAction, actionLabel, actionColor }: { 
+    order: Order, 
+    onAction: () => void, 
+    actionLabel: string,
+    actionColor: 'default' | 'success' 
+}) {
+    const elapsed = formatDistanceToNow(new Date(order.created_at));
+    const isLongWait = (new Date().getTime() - new Date(order.created_at).getTime()) > 1000 * 60 * 15; // 15 mins
+
+    return (
+        <Card className={`border-l-4 ${isLongWait ? 'border-l-red-500' : 'border-l-blue-500'} shadow-sm`}>
+            <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-lg">Order #{order.id}</CardTitle>
+                        <p className="text-sm text-muted-foreground font-medium mt-1">
+                            {order.guest_name || 'Guest'}
+                        </p>
+                    </div>
+                    <Badge variant={isLongWait ? "destructive" : "outline"} className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {elapsed}
+                    </Badge>
+                </div>
+            </CardHeader>
+            <CardContent className="pb-2">
+                <div className="space-y-3">
+                    {order.items.map(item => (
+                        <div key={item.id} className="flex justify-between items-start text-sm border-b border-gray-100 last:border-0 pb-2 last:pb-0">
+                            <div className="flex gap-2">
+                                <span className="font-bold w-6 text-center bg-gray-100 rounded">{item.quantity}</span>
+                                <div>
+                                    <span className="font-medium">{item.menu_item.name}</span>
+                                    {item.modifiers && item.modifiers.length > 0 && (
+                                        <div className="text-xs text-gray-500 mt-0.5">
+                                            + {item.modifiers.map(m => m.name).join(', ')}
+                                        </div>
+                                    )}
+                                    {item.notes && (
+                                        <div className="text-xs text-orange-600 italic mt-0.5 bg-orange-50 p-1 rounded">
+                                            Note: {item.notes}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+            <CardFooter className="pt-2">
+                <Button 
+                    className={`w-full ${actionColor === 'success' ? 'bg-green-600 hover:bg-green-700' : ''}`} 
+                    onClick={onAction}
+                >
+                    {actionLabel}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+            </CardFooter>
+        </Card>
     );
 }

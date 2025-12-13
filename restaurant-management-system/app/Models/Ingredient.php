@@ -30,4 +30,14 @@ class Ingredient extends Model
             ->withPivot('quantity')
             ->withTimestamps();
     }
+
+    public function batches()
+    {
+        return $this->hasMany(IngredientBatch::class);
+    }
+
+    public function wasteLogs()
+    {
+        return $this->hasMany(WasteLog::class);
+    }
 }

@@ -60,6 +60,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/inventory', [App\Http\Controllers\IngredientController::class, 'store'])->name('inventory.store');
         Route::put('/inventory/{ingredient}', [App\Http\Controllers\IngredientController::class, 'update'])->name('inventory.update');
         Route::delete('/inventory/{ingredient}', [App\Http\Controllers\IngredientController::class, 'destroy'])->name('inventory.destroy');
+        Route::post('/inventory/{ingredient}/receive', [App\Http\Controllers\IngredientController::class, 'receive'])->name('inventory.receive');
+        Route::post('/inventory/{ingredient}/waste', [App\Http\Controllers\IngredientController::class, 'waste'])->name('inventory.waste');
 
         Route::get('/orders', [OrderController::class, 'pageIndex'])->name('orders.index');
         Route::get('/reports', [ReportController::class, 'pageIndex'])->name('reports.index');

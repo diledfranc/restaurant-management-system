@@ -17,7 +17,7 @@ class KitchenController extends Controller
     public function apiIndex()
     {
         // Fetch orders that are 'placed' or 'preparing'
-        $orders = Order::with(['items.menuItem'])
+        $orders = Order::with(['items.menuItem', 'items.modifiers'])
             ->whereIn('status', ['placed', 'preparing'])
             ->orderBy('created_at', 'asc')
             ->get();

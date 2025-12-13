@@ -14,8 +14,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
+use App\Services\InventoryService;
+
 class OrderController extends Controller
 {
+    protected $inventoryService;
+
+    public function __construct(InventoryService $inventoryService)
+    {
+        $this->inventoryService = $inventoryService;
+    }
+
     // List orders (filterable)
     public function index(Request $request)
     {
@@ -114,6 +123,7 @@ class OrderController extends Controller
                 $itemPrice = $mi->price_cents;
                 
                 $modifiersTotal = 0;
+                $modifiersCost = 0;
                 $modifierAttachments = [];
                 
                 if (isset($c['modifiers']) && is_array($c['modifiers'])) {
@@ -121,6 +131,7 @@ class OrderController extends Controller
                         $mod = \App\Models\Modifier::find($modData['modifier_id']);
                         if ($mod) {
                             $modifiersTotal += $mod->price_cents;
+                            $modifiersCost += $mod->cost_cents;
                             $modifierAttachments[$mod->id] = [
                                 'modifier_name' => $mod->name,
                                 'price_cents' => $mod->price_cents
@@ -130,6 +141,7 @@ class OrderController extends Controller
                 }
                 
                 $effectiveUnitPrice = $itemPrice + $modifiersTotal;
+                $totalCost = ($mi->cost_cents + $modifiersCost) * $qty;
 
                 $orderItem = OrderItem::create([
                     'order_id' => $order->id,
@@ -137,6 +149,7 @@ class OrderController extends Controller
                     'quantity' => $qty,
                     'unit_price_cents' => $effectiveUnitPrice,
                     'total_price_cents' => $effectiveUnitPrice * $qty,
+                    'cost_cents' => $totalCost,
                     'notes' => $c['notes'] ?? null,
                 ]);
                 
@@ -144,11 +157,25 @@ class OrderController extends Controller
                     $orderItem->modifiers()->attach($modifierAttachments);
                 }
 
-                // Deduct stock
+                // Deduct stock for Menu Item
                 $mi->load('ingredients');
                 foreach ($mi->ingredients as $ingredient) {
                     $quantityToDeduct = $ingredient->pivot->quantity * $qty;
-                    $ingredient->decrement('current_stock', $quantityToDeduct);
+                    $this->inventoryService->consumeStock($ingredient, $quantityToDeduct);
+                }
+
+                // Deduct stock for Modifiers
+                if (isset($c['modifiers']) && is_array($c['modifiers'])) {
+                    foreach ($c['modifiers'] as $modData) {
+                        $mod = \App\Models\Modifier::find($modData['modifier_id']);
+                        if ($mod) {
+                            $mod->load('ingredients');
+                            foreach ($mod->ingredients as $modIngredient) {
+                                $quantityToDeduct = $modIngredient->pivot->quantity * $qty;
+                                $this->inventoryService->consumeStock($modIngredient, $quantityToDeduct);
+                            }
+                        }
+                    }
                 }
             }
 
