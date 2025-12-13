@@ -20,4 +20,11 @@ class OrderItem extends Model
     {
         return $this->belongsTo(MenuItem::class, 'menu_item_id');
     }
+
+    public function modifiers()
+    {
+        return $this->belongsToMany(Modifier::class, 'order_item_modifiers', 'order_item_id', 'modifier_id')
+            ->withPivot(['modifier_name', 'price_cents'])
+            ->withTimestamps();
+    }
 }

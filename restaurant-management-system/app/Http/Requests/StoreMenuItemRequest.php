@@ -22,6 +22,11 @@ class StoreMenuItemRequest extends FormRequest
             'price_cents'  => 'required|integer|min:1',
             'is_available' => 'boolean',
             'image'        => 'nullable|image|max:2048',
+            'modifier_groups' => 'nullable|array',
+            'modifier_groups.*' => 'exists:modifier_groups,id',
+            'ingredients' => 'nullable|array',
+            'ingredients.*.id' => 'required|exists:ingredients,id',
+            'ingredients.*.quantity' => 'required|numeric|min:0.01',
         ];
     }
 }

@@ -25,4 +25,26 @@ class MenuItem extends Model
     {
         return $this->hasMany(OrderItem::class, 'menu_item_id');
     }
+
+    public function modifierGroups()
+    {
+        return $this->belongsToMany(ModifierGroup::class, 'menu_item_modifier_group')
+            ->withPivot('sort_order')
+            ->orderBy('pivot_sort_order')
+            ->withTimestamps();
+    }
+
+    public function ingredients()
+    {
+        return $this->belongsToMany(Ingredient::class, 'menu_item_ingredients')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
+
+    public function getCostCentsAttribute()
+    {
+        return $this->ingredients->sum(function ($ingredient) {
+            return $ingredient->cost_per_unit_cents * $ingredient->pivot->quantity;
+        });
+    }
 }

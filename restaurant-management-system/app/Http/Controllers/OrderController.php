@@ -19,7 +19,7 @@ class OrderController extends Controller
     // List orders (filterable)
     public function index(Request $request)
     {
-        $query = Order::with(['items.menuItem','user','assignedStaff']);
+        $query = Order::with(['items.menuItem', 'items.modifiers', 'user', 'assignedStaff']);
 
         // filters
         if ($request->filled('status')) {
@@ -43,7 +43,7 @@ class OrderController extends Controller
     // Inertia page for management UI
     public function pageIndex(Request $request)
     {
-        $query = Order::with(['items.menuItem','user','assignedStaff']);
+        $query = Order::with(['items.menuItem', 'items.modifiers', 'user', 'assignedStaff']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -82,8 +82,19 @@ class OrderController extends Controller
             foreach ($data['cart'] as $c) {
                 $mi = MenuItem::findOrFail($c['menu_item_id']);
                 $qty = intval($c['quantity']);
-                $unit = $mi->price_cents;
-                $total += $unit * $qty;
+                $itemPrice = $mi->price_cents;
+                
+                $modifiersTotal = 0;
+                if (isset($c['modifiers']) && is_array($c['modifiers'])) {
+                    foreach ($c['modifiers'] as $modData) {
+                        $mod = \App\Models\Modifier::find($modData['modifier_id']);
+                        if ($mod) {
+                            $modifiersTotal += $mod->price_cents;
+                        }
+                    }
+                }
+                
+                $total += ($itemPrice + $modifiersTotal) * $qty;
             }
 
             $order = Order::create([
@@ -100,15 +111,45 @@ class OrderController extends Controller
             foreach ($data['cart'] as $c) {
                 $mi = MenuItem::findOrFail($c['menu_item_id']);
                 $qty = intval($c['quantity']);
-                $unit = $mi->price_cents;
-                OrderItem::create([
+                $itemPrice = $mi->price_cents;
+                
+                $modifiersTotal = 0;
+                $modifierAttachments = [];
+                
+                if (isset($c['modifiers']) && is_array($c['modifiers'])) {
+                    foreach ($c['modifiers'] as $modData) {
+                        $mod = \App\Models\Modifier::find($modData['modifier_id']);
+                        if ($mod) {
+                            $modifiersTotal += $mod->price_cents;
+                            $modifierAttachments[$mod->id] = [
+                                'modifier_name' => $mod->name,
+                                'price_cents' => $mod->price_cents
+                            ];
+                        }
+                    }
+                }
+                
+                $effectiveUnitPrice = $itemPrice + $modifiersTotal;
+
+                $orderItem = OrderItem::create([
                     'order_id' => $order->id,
                     'menu_item_id' => $mi->id,
                     'quantity' => $qty,
-                    'unit_price_cents' => $unit,
-                    'total_price_cents' => $unit * $qty,
+                    'unit_price_cents' => $effectiveUnitPrice,
+                    'total_price_cents' => $effectiveUnitPrice * $qty,
                     'notes' => $c['notes'] ?? null,
                 ]);
+                
+                if (!empty($modifierAttachments)) {
+                    $orderItem->modifiers()->attach($modifierAttachments);
+                }
+
+                // Deduct stock
+                $mi->load('ingredients');
+                foreach ($mi->ingredients as $ingredient) {
+                    $quantityToDeduct = $ingredient->pivot->quantity * $qty;
+                    $ingredient->decrement('current_stock', $quantityToDeduct);
+                }
             }
 
             // optional: dispatch notification job here (email/in-app)
@@ -123,7 +164,7 @@ class OrderController extends Controller
 
             DB::commit();
 
-            return (new OrderResource($order->load('items.menuItem','user')))->response()->setStatusCode(201);
+            return (new OrderResource($order->load('items.menuItem', 'items.modifiers', 'user')))->response()->setStatusCode(201);
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json([

@@ -12,6 +12,12 @@ interface CartLine {
     name: string;
     price_cents: number;
     quantity: number;
+    modifiers?: {
+        group_name: string;
+        option_name: string;
+        price_cents: number;
+        modifier_id: number;
+    }[];
 }
 
 const CART_KEY = 'customer_cart';

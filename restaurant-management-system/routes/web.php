@@ -44,6 +44,23 @@ Route::middleware(['auth'])->group(function () {
     // Manager & Staff Operations
     Route::middleware(['role:manager,staff'])->group(function () {
         Route::get('/menu', [MenuItemController::class, 'index'])->name('menu.index');
+        
+        // Modifiers
+        Route::get('/modifiers', [App\Http\Controllers\ModifierGroupController::class, 'index'])->name('modifiers.index');
+        Route::post('/modifiers', [App\Http\Controllers\ModifierGroupController::class, 'store'])->name('modifiers.store');
+        Route::put('/modifiers/{modifierGroup}', [App\Http\Controllers\ModifierGroupController::class, 'update'])->name('modifiers.update');
+        Route::delete('/modifiers/{modifierGroup}', [App\Http\Controllers\ModifierGroupController::class, 'destroy'])->name('modifiers.destroy');
+        
+        Route::post('/modifiers/{modifierGroup}/items', [App\Http\Controllers\ModifierGroupController::class, 'storeModifier'])->name('modifiers.items.store');
+        Route::put('/modifiers/{modifierGroup}/items/{modifier}', [App\Http\Controllers\ModifierGroupController::class, 'updateModifier'])->name('modifiers.items.update');
+        Route::delete('/modifiers/{modifierGroup}/items/{modifier}', [App\Http\Controllers\ModifierGroupController::class, 'destroyModifier'])->name('modifiers.items.destroy');
+
+        // Inventory
+        Route::get('/inventory', [App\Http\Controllers\IngredientController::class, 'index'])->name('inventory.index');
+        Route::post('/inventory', [App\Http\Controllers\IngredientController::class, 'store'])->name('inventory.store');
+        Route::put('/inventory/{ingredient}', [App\Http\Controllers\IngredientController::class, 'update'])->name('inventory.update');
+        Route::delete('/inventory/{ingredient}', [App\Http\Controllers\IngredientController::class, 'destroy'])->name('inventory.destroy');
+
         Route::get('/orders', [OrderController::class, 'pageIndex'])->name('orders.index');
         Route::get('/reports', [ReportController::class, 'pageIndex'])->name('reports.index');
         Route::get('/delivery', [DeliveryController::class, 'pageIndex'])->name('delivery.index');

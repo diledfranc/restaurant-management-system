@@ -25,6 +25,23 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Menu', href: '/menu' },
 ];
 
+interface MenuCategory {
+    id: number;
+    name: string;
+}
+
+interface ModifierGroup {
+    id: number;
+    name: string;
+}
+
+interface Ingredient {
+    id: number;
+    name: string;
+    unit: string;
+    quantity?: number;
+}
+
 interface MenuItem {
     id: number;
     name: string;
@@ -35,6 +52,10 @@ interface MenuItem {
     image_path?: string;
     image_url?: string;
     created_at: string;
+    modifier_groups?: ModifierGroup[];
+    ingredients?: Ingredient[];
+    cost_cents?: number;
+    profit_margin_percent?: number;
 }
 
 interface MenuCategory {
@@ -56,13 +77,15 @@ interface MenuPageProps {
         };
     };
     categories: MenuCategory[];
+    modifierGroups: ModifierGroup[];
+    ingredients: Ingredient[];
     filters: {
         category?: string;
     };
 }
 
 export default function MenuIndex() {
-    const { items, categories, filters } = usePage<MenuPageProps>().props;
+    const { items, categories, filters, modifierGroups, ingredients } = usePage<MenuPageProps>().props;
     const [open, setOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
@@ -77,6 +100,8 @@ export default function MenuIndex() {
         is_available: true,
         image: null as File | null,
         image_url: null as string | null,
+        modifier_groups: [] as number[],
+        ingredients: [] as { id: number; quantity: number }[],
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     
@@ -90,6 +115,43 @@ export default function MenuIndex() {
     const [newCategoryName, setNewCategoryName] = useState('');
     const [categoryProcessing, setCategoryProcessing] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
+
+    // Ingredient management state
+    const [selectedIngredientId, setSelectedIngredientId] = useState<string>('');
+    const [ingredientQuantity, setIngredientQuantity] = useState<string>('');
+
+    const handleAddIngredient = () => {
+        if (!selectedIngredientId || !ingredientQuantity) return;
+        
+        const ingredient = ingredients.find(i => i.id === parseInt(selectedIngredientId));
+        if (!ingredient) return;
+
+        const quantity = parseFloat(ingredientQuantity);
+        if (isNaN(quantity) || quantity <= 0) return;
+
+        const existingIndex = formData.ingredients.findIndex(i => i.id === ingredient.id);
+        
+        if (existingIndex >= 0) {
+            const newIngredients = [...formData.ingredients];
+            newIngredients[existingIndex].quantity = quantity;
+            setFormData({ ...formData, ingredients: newIngredients });
+        } else {
+            setFormData({
+                ...formData,
+                ingredients: [...formData.ingredients, { id: ingredient.id, quantity }]
+            });
+        }
+
+        setSelectedIngredientId('');
+        setIngredientQuantity('');
+    };
+
+    const handleRemoveIngredient = (id: number) => {
+        setFormData({
+            ...formData,
+            ingredients: formData.ingredients.filter(i => i.id !== id)
+        });
+    };
     const [categoryDeleteDialogOpen, setCategoryDeleteDialogOpen] = useState(false);
 
     const getCsrfToken = (): string => {
@@ -163,6 +225,15 @@ export default function MenuIndex() {
         if (formData.image) {
             data.append('image', formData.image);
         }
+
+        formData.modifier_groups.forEach((id, index) => {
+            data.append(`modifier_groups[${index}]`, String(id));
+        });
+
+        formData.ingredients.forEach((ingredient, index) => {
+            data.append(`ingredients[${index}][id]`, String(ingredient.id));
+            data.append(`ingredients[${index}][quantity]`, String(ingredient.quantity));
+        });
 
         if (editingId) {
             data.append('_method', 'PUT');
@@ -246,6 +317,8 @@ export default function MenuIndex() {
             is_available: item.is_available,
             image: null,
             image_url: item.image_url || null,
+            modifier_groups: item.modifier_groups?.map(g => g.id) || [],
+            ingredients: item.ingredients?.map(i => ({ id: i.id, quantity: i.quantity || 0 })) || [],
         });
         setOpen(true);
     };
@@ -260,8 +333,11 @@ export default function MenuIndex() {
             is_available: true,
             image: null,
             image_url: null,
+            modifier_groups: [],
+            ingredients: [],
         });
         setErrors({});
+        setOpen(true);
     };
 
     const handleAddCategory = async (e: React.FormEvent) => {
@@ -428,6 +504,93 @@ export default function MenuIndex() {
                                         />
                                         {errors.image && <InputError message={errors.image} />}
                                     </div>
+                                    <div className="grid gap-2">
+                                        <Label>Modifier Groups</Label>
+                                        <div className="grid grid-cols-2 gap-2 border rounded-md p-3 max-h-40 overflow-y-auto">
+                                            {modifierGroups.map((group) => (
+                                                <div key={group.id} className="flex items-center space-x-2">
+                                                    <Checkbox 
+                                                        id={`mod_group_${group.id}`}
+                                                        checked={formData.modifier_groups.includes(group.id)}
+                                                        onCheckedChange={(checked) => {
+                                                            if (checked) {
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    modifier_groups: [...formData.modifier_groups, group.id]
+                                                                });
+                                                            } else {
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    modifier_groups: formData.modifier_groups.filter(id => id !== group.id)
+                                                                });
+                                                            }
+                                                        }}
+                                                    />
+                                                    <Label htmlFor={`mod_group_${group.id}`} className="text-sm font-normal cursor-pointer">
+                                                        {group.name}
+                                                    </Label>
+                                                </div>
+                                            ))}
+                                            {modifierGroups.length === 0 && (
+                                                <p className="text-sm text-muted-foreground col-span-2">No modifier groups available.</p>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid gap-2">
+                                        <Label>Recipe / Ingredients</Label>
+                                        <div className="flex gap-2">
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={selectedIngredientId}
+                                                onChange={(e) => setSelectedIngredientId(e.target.value)}
+                                            >
+                                                <option value="">Select Ingredient</option>
+                                                {ingredients.map((ing) => (
+                                                    <option key={ing.id} value={ing.id}>
+                                                        {ing.name} ({ing.unit})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <Input
+                                                type="number"
+                                                placeholder="Qty"
+                                                className="w-24"
+                                                step="0.01"
+                                                value={ingredientQuantity}
+                                                onChange={(e) => setIngredientQuantity(e.target.value)}
+                                            />
+                                            <Button type="button" onClick={handleAddIngredient} size="sm">
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        
+                                        {formData.ingredients.length > 0 && (
+                                            <div className="border rounded-md p-2 space-y-2 mt-2">
+                                                {formData.ingredients.map((item) => {
+                                                    const ingredient = ingredients.find(i => i.id === item.id);
+                                                    return (
+                                                        <div key={item.id} className="flex items-center justify-between bg-muted/50 p-2 rounded text-sm">
+                                                            <span>{ingredient?.name}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-mono">{item.quantity} {ingredient?.unit}</span>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-6 w-6 p-0 text-destructive"
+                                                                    onClick={() => handleRemoveIngredient(item.id)}
+                                                                >
+                                                                    <Trash2 className="h-3 w-3" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="checkbox"
@@ -511,7 +674,17 @@ export default function MenuIndex() {
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <p className="text-sm text-muted-foreground line-clamp-2 h-[2.5rem]">{item.description || ''}</p>
-                                    <p className="text-2xl font-bold">฿{(item.price_cents / 100).toFixed(2)}</p>
+                                    <div className="flex justify-between items-end">
+                                        <p className="text-2xl font-bold">฿{(item.price_cents / 100).toFixed(2)}</p>
+                                        {item.cost_cents !== undefined && item.cost_cents > 0 && (
+                                            <div className="text-right text-xs">
+                                                <div className="text-muted-foreground">Cost: ฿{(item.cost_cents / 100).toFixed(2)}</div>
+                                                <div className={`font-semibold ${item.profit_margin_percent && item.profit_margin_percent < 30 ? 'text-red-500' : 'text-green-600'}`}>
+                                                    Margin: {item.profit_margin_percent}%
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="flex gap-2">
                                         <Button
                                             variant="outline"

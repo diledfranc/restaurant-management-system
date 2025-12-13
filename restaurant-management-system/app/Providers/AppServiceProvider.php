@@ -21,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \App\Models\Ingredient::observe(\App\Observers\IngredientObserver::class);
+
         RedirectIfAuthenticated::redirectUsing(function () {
             $user = Auth::user();
             if ($user && ($user->hasRole('admin') || $user->hasRole('manager') || $user->hasRole('staff') || $user->hasRole('cashier'))) {

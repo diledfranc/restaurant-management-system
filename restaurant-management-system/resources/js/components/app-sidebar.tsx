@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, UtensilsCrossed, ShoppingCart, FileText, Truck, Users, Calendar, Home, User, Settings, Monitor, Calculator } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, UtensilsCrossed, ShoppingCart, FileText, Truck, Users, Calendar, Home, User, Settings, Monitor, Calculator, Sliders, Package } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const customerNavItems: NavItem[] = [
@@ -64,6 +64,8 @@ export function AppSidebar() {
                 { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
                 { title: 'Staff', href: '/staff', icon: Users },
                 { title: 'Activity Logs', href: '/logs', icon: FileText },
+                { title: 'Modifiers', href: '/modifiers', icon: Sliders },
+                { title: 'Inventory', href: '/inventory', icon: Package },
                 { title: 'Settings', href: '/settings', icon: Settings },
             ];
         }
@@ -72,6 +74,8 @@ export function AppSidebar() {
             return [
                 { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
                 { title: 'Menu', href: '/menu', icon: UtensilsCrossed },
+                { title: 'Modifiers', href: '/modifiers', icon: Sliders },
+                { title: 'Inventory', href: '/inventory', icon: Package },
                 { title: 'Orders', href: '/orders', icon: ShoppingCart },
                 { title: 'Reports', href: '/reports', icon: FileText },
                 { title: 'Delivery', href: '/delivery', icon: Truck },

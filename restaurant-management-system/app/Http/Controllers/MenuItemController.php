@@ -13,7 +13,7 @@ class MenuItemController extends Controller
 {
     public function index(Request $request)
     {
-        $query = MenuItem::with('category');
+        $query = MenuItem::with(['category', 'modifierGroups', 'ingredients']);
 
         if ($request->filled('category')) {
             $category = $request->category;
@@ -34,10 +34,14 @@ class MenuItemController extends Controller
         }
 
         $categories = \App\Models\MenuCategory::all();
+        $modifierGroups = \App\Models\ModifierGroup::where('is_active', true)->get();
+        $ingredients = \App\Models\Ingredient::all();
 
         return Inertia::render('menu/index', [
             'items' => MenuItemResource::collection($items)->response()->getData(true),
             'categories' => $categories,
+            'modifierGroups' => $modifierGroups,
+            'ingredients' => $ingredients,
             'filters' => $request->only(['category']),
         ]);
     }
@@ -52,12 +56,23 @@ class MenuItemController extends Controller
 
         $item = MenuItem::create($data);
 
+        if (isset($data['modifier_groups'])) {
+            $item->modifierGroups()->sync($data['modifier_groups']);
+        }
+
+        if (isset($data['ingredients'])) {
+            $ingredients = collect($data['ingredients'])->mapWithKeys(function ($item) {
+                return [$item['id'] => ['quantity' => $item['quantity']]];
+            });
+            $item->ingredients()->sync($ingredients);
+        }
+
         return new MenuItemResource($item);
     }
 
     public function show(MenuItem $menuItem)
     {
-        return new MenuItemResource($menuItem->load('category'));
+        return new MenuItemResource($menuItem->load(['category', 'modifierGroups', 'ingredients']));
     }
 
     public function update(UpdateMenuItemRequest $request, MenuItem $menuItem)
@@ -69,6 +84,17 @@ class MenuItemController extends Controller
         }
 
         $menuItem->update($data);
+
+        if (isset($data['modifier_groups'])) {
+            $menuItem->modifierGroups()->sync($data['modifier_groups']);
+        }
+
+        if (isset($data['ingredients'])) {
+            $ingredients = collect($data['ingredients'])->mapWithKeys(function ($item) {
+                return [$item['id'] => ['quantity' => $item['quantity']]];
+            });
+            $menuItem->ingredients()->sync($ingredients);
+        }
 
         return new MenuItemResource($menuItem);
     }

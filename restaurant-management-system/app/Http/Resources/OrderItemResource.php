@@ -23,6 +23,13 @@ class OrderItemResource extends JsonResource
             'unit_price_cents' => $this->unit_price_cents,
             'total_price_cents' => $this->total_price_cents,
             'notes' => $this->notes,
+            'modifiers' => $this->modifiers->map(function ($mod) {
+                return [
+                    'id' => $mod->id,
+                    'name' => $mod->pivot->modifier_name,
+                    'price_cents' => $mod->pivot->price_cents,
+                ];
+            }),
         ];
     }
 }

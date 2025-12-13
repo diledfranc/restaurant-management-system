@@ -21,6 +21,8 @@ class StoreOrderRequest extends FormRequest
             'cart.*.menu_item_id' => 'required|exists:menu_items,id',
             'cart.*.quantity' => 'required|integer|min:1',
             'cart.*.notes' => 'nullable|string|max:500',
+            'cart.*.modifiers' => 'nullable|array',
+            'cart.*.modifiers.*.modifier_id' => 'required|exists:modifiers,id',
             'user_id' => 'nullable|exists:users,id',
             'guest_name' => 'required_without:user_id|string|max:191',
             'guest_phone' => 'required_without:user_id|string|max:20',

@@ -17,6 +17,21 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 
+interface Modifier {
+    id: number;
+    name: string;
+    price_cents: number;
+    is_available: boolean;
+}
+
+interface ModifierGroup {
+    id: number;
+    name: string;
+    min_selection: number;
+    max_selection: number;
+    modifiers: Modifier[];
+}
+
 interface MenuItem {
     id: number;
     name: string;
@@ -24,6 +39,7 @@ interface MenuItem {
     price_cents: number;
     image_url?: string | null;
     category?: string | null;
+    modifier_groups?: ModifierGroup[];
 }
 
 interface Category {
@@ -36,6 +52,12 @@ interface CartLine {
     name: string;
     price_cents: number;
     quantity: number;
+    modifiers: {
+        group_name: string;
+        option_name: string;
+        price_cents: number;
+        modifier_id: number;
+    }[];
 }
 
 const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
@@ -53,6 +75,10 @@ export default function CustomerMenuPage() {
     const [search, setSearch] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [showLoginDialog, setShowLoginDialog] = useState(false);
+    
+    // Customization state
+    const [customizingItem, setCustomizingItem] = useState<MenuItem | null>(null);
+    const [selectedModifiers, setSelectedModifiers] = useState<Record<number, number[]>>({});
     
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -120,21 +146,103 @@ export default function CustomerMenuPage() {
         });
     }, [items, search]);
 
-    const addToCart = (item: MenuItem) => {
+    const openCustomization = (item: MenuItem) => {
         if (!auth.user) {
             setShowLoginDialog(true);
             return;
         }
 
+        if (item.modifier_groups && item.modifier_groups.length > 0) {
+            setCustomizingItem(item);
+            // Initialize default selections if needed, or empty
+            setSelectedModifiers({});
+        } else {
+            addItemToCart(item, []);
+        }
+    };
+
+    const addItemToCart = (item: MenuItem, modifiers: CartLine['modifiers']) => {
         setCart((prev) => {
-            const existing = prev.find((line) => line.id === item.id);
-            if (existing) {
-                return prev.map((line) =>
-                    line.id === item.id ? { ...line, quantity: line.quantity + 1 } : line
-                );
+            // Check for identical item (same ID and same modifiers)
+            // This is a simple check, might need more robust comparison for complex modifiers
+            const existingIndex = prev.findIndex((line) => 
+                line.id === item.id && 
+                JSON.stringify(line.modifiers) === JSON.stringify(modifiers)
+            );
+
+            if (existingIndex >= 0) {
+                const newCart = [...prev];
+                newCart[existingIndex].quantity += 1;
+                return newCart;
             }
-            return [...prev, { id: item.id, name: item.name, price_cents: item.price_cents, quantity: 1 }];
+            
+            // Calculate base price + modifiers
+            const modifiersTotal = modifiers.reduce((sum, m) => sum + m.price_cents, 0);
+            
+            return [...prev, { 
+                id: item.id, 
+                name: item.name, 
+                price_cents: item.price_cents + modifiersTotal, 
+                quantity: 1,
+                modifiers 
+            }];
         });
+        setCustomizingItem(null);
+        setSelectedModifiers({});
+    };
+
+    const handleModifierToggle = (groupId: number, modifierId: number, isSingle: boolean) => {
+        setSelectedModifiers(prev => {
+            const current = prev[groupId] || [];
+            if (isSingle) {
+                // If clicking the same one, do nothing (radio behavior usually requires one selected)
+                // Or allow deselect if min_selection is 0? Let's assume radio behavior for now.
+                return { ...prev, [groupId]: [modifierId] };
+            } else {
+                // Checkbox behavior
+                if (current.includes(modifierId)) {
+                    return { ...prev, [groupId]: current.filter(id => id !== modifierId) };
+                } else {
+                    return { ...prev, [groupId]: [...current, modifierId] };
+                }
+            }
+        });
+    };
+
+    const confirmCustomization = () => {
+        if (!customizingItem) return;
+
+        // Validation
+        for (const group of customizingItem.modifier_groups || []) {
+            const selectedCount = (selectedModifiers[group.id] || []).length;
+            if (selectedCount < group.min_selection) {
+                alert(`Please select at least ${group.min_selection} option(s) for ${group.name}`);
+                return;
+            }
+            if (selectedCount > group.max_selection) {
+                alert(`Please select at most ${group.max_selection} option(s) for ${group.name}`);
+                return;
+            }
+        }
+
+        // Build modifiers list
+        const finalModifiers: CartLine['modifiers'] = [];
+        customizingItem.modifier_groups?.forEach(group => {
+            const selectedIds = selectedModifiers[group.id] || [];
+            selectedIds.forEach(modId => {
+                const mod = group.modifiers.find(m => m.id === modId);
+                if (mod) {
+                    finalModifiers.push({
+                        group_name: group.name,
+                        option_name: mod.name,
+                        price_cents: mod.price_cents,
+                        modifier_id: mod.id
+                    });
+                }
+            });
+        });
+
+        addItemToCart(customizingItem, finalModifiers);
     };
 
     const cartTotalCents = useMemo(
@@ -236,7 +344,7 @@ export default function CustomerMenuPage() {
                                         <p className="text-sm text-muted-foreground line-clamp-3 h-[3.75rem]">{item.description || 'No description available.'}</p>
                                     </CardContent>
                                     <CardFooter className="pt-0">
-                                        <Button className="w-full" onClick={() => addToCart(item)}>
+                                        <Button className="w-full" onClick={() => openCustomization(item)}>
                                             <ShoppingCart className="mr-2 h-4 w-4" /> Add to Order
                                         </Button>
                                     </CardFooter>
@@ -286,11 +394,18 @@ export default function CustomerMenuPage() {
                                         <p className="text-xs mt-1">Add items to get started!</p>
                                     </div>
                                 )}
-                                {cart.map((line) => (
-                                    <div key={line.id} className="flex items-center justify-between gap-3 pb-3 border-b last:border-0 last:pb-0">
+                                {cart.map((line, idx) => (
+                                    <div key={`${line.id}-${idx}`} className="flex items-start justify-between gap-3 pb-3 border-b last:border-0 last:pb-0">
                                         <div className="flex-1 min-w-0">
                                             <p className="font-medium truncate">{line.name}</p>
-                                            <p className="text-xs text-muted-foreground">Qty: {line.quantity}</p>
+                                            {line.modifiers && line.modifiers.length > 0 && (
+                                                <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                                    {line.modifiers.map((mod, i) => (
+                                                        <div key={i}>+ {mod.option_name}</div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <p className="text-xs text-muted-foreground mt-1">Qty: {line.quantity}</p>
                                         </div>
                                         <div className="text-right font-medium">
                                             {formatCurrency(line.price_cents * line.quantity)}
@@ -331,6 +446,71 @@ export default function CustomerMenuPage() {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={!!customizingItem} onOpenChange={(open) => !open && setCustomizingItem(null)}>
+                <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Customize {customizingItem?.name}</DialogTitle>
+                        <DialogDescription>
+                            Select your preferences
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-6 py-4">
+                        {customizingItem?.modifier_groups?.map(group => (
+                            <div key={group.id} className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="font-medium">{group.name}</h4>
+                                    <span className="text-xs text-muted-foreground">
+                                        {group.min_selection > 0 ? `Required (Min ${group.min_selection})` : 'Optional'}
+                                        {group.max_selection > 1 && ` • Max ${group.max_selection}`}
+                                    </span>
+                                </div>
+                                <div className="grid gap-2">
+                                    {group.modifiers.map(mod => {
+                                        const isSelected = (selectedModifiers[group.id] || []).includes(mod.id);
+                                        const isSingle = group.max_selection === 1;
+                                        
+                                        return (
+                                            <div 
+                                                key={mod.id} 
+                                                className={`
+                                                    flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors
+                                                    ${isSelected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}
+                                                    ${!mod.is_available ? 'opacity-50 pointer-events-none' : ''}
+                                                `}
+                                                onClick={() => handleModifierToggle(group.id, mod.id, isSingle)}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`
+                                                        h-4 w-4 rounded-full border flex items-center justify-center
+                                                        ${isSelected ? 'border-primary bg-primary' : 'border-muted-foreground'}
+                                                    `}>
+                                                        {isSelected && <div className="h-2 w-2 rounded-full bg-white" />}
+                                                    </div>
+                                                    <span className="text-sm font-medium">{mod.name}</span>
+                                                </div>
+                                                {mod.price_cents > 0 && (
+                                                    <span className="text-sm text-muted-foreground">+{formatCurrency(mod.price_cents)}</span>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setCustomizingItem(null)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={confirmCustomization}>
+                            Add to Order
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
                 <DialogContent>
