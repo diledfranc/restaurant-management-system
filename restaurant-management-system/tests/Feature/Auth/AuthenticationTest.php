@@ -22,7 +22,7 @@ test('users can authenticate using the login screen', function () {
     file_put_contents(__DIR__ . '/../../tmp_login_response.html', (string) $response->getContent());
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect('/shop');
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {

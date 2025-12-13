@@ -46,6 +46,24 @@ class ReportController extends Controller
             ->orderBy('day', 'asc')
             ->get();
 
+        $topSellingRows = OrderItem::select('menu_item_id', DB::raw('SUM(quantity) as total_sold'))
+            ->whereHas('order', function ($q) use ($from, $to) {
+                $q->whereBetween('created_at', [$from->startOfDay(), $to->endOfDay()])
+                  ->where('status', '!=', 'cancelled');
+            })
+            ->groupBy('menu_item_id')
+            ->orderBy('total_sold', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($r) {
+                $item = MenuItem::find($r->menu_item_id);
+                return [
+                    'menu_item_id' => $r->menu_item_id,
+                    'name' => $item?->name,
+                    'total_sold' => (int) $r->total_sold,
+                ];
+            });
+
         $lowSellingRows = OrderItem::select('menu_item_id', DB::raw('SUM(quantity) as total_sold'))
             ->whereHas('order', function ($q) use ($from, $to) {
                 $q->whereBetween('created_at', [$from->startOfDay(), $to->endOfDay()])
@@ -77,6 +95,7 @@ class ReportController extends Controller
         return Inertia::render('reports/index', [
             'summary' => $summary,
             'sales' => $salesRows,
+            'topSelling' => $topSellingRows,
             'lowSelling' => $lowSellingRows,
         ]);
     }

@@ -10,7 +10,7 @@ class ActivityLogController extends Controller
 {
     public function index(Request $request)
     {
-        // $this->authorize('viewAny', ActivityLog::class); // Commented out for now to avoid policy errors if not set up
+        $this->authorize('viewAny', ActivityLog::class);
 
         $logs = ActivityLog::with('user')
             ->latest()

@@ -1,8 +1,23 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import CustomerLayout from '@/layouts/customer-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEffect, useState } from 'react';
+import { ShoppingCart, Clock, CheckCircle, XCircle, Truck, Package, RefreshCw, MapPin } from 'lucide-react';
+
+interface OrderItem {
+    id: number;
+    menu_item: {
+        id: number;
+        name: string;
+        price_cents: number;
+    };
+    quantity: number;
+    unit_price_cents: number;
+    total_price_cents: number;
+}
 
 interface Order {
     id: number;
@@ -12,54 +27,89 @@ interface Order {
     guest_phone?: string;
     guest_address?: string;
     created_at: string;
-    items?: Array<{
-        id: number;
-        name: string;
-        quantity: number;
-        price_cents: number;
-    }>;
+    items: OrderItem[];
 }
 
 const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
 
-const getStatusColor = (status: string) => {
+const getStatusConfig = (status: string) => {
     switch (status.toLowerCase()) {
         case 'pending':
-            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+            return { color: 'bg-yellow-500', icon: Clock, label: 'Pending' };
         case 'preparing':
-            return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+            return { color: 'bg-blue-500', icon: Package, label: 'Preparing' };
         case 'ready':
-            return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+            return { color: 'bg-green-500', icon: CheckCircle, label: 'Ready' };
+        case 'picked_up':
+            return { color: 'bg-purple-500', icon: Truck, label: 'On the Way' };
         case 'delivered':
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+            return { color: 'bg-gray-500', icon: CheckCircle, label: 'Delivered' };
         case 'cancelled':
-            return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+            return { color: 'bg-red-500', icon: XCircle, label: 'Cancelled' };
         default:
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+            return { color: 'bg-gray-500', icon: Clock, label: status };
     }
 };
+
+const CART_KEY = 'customer_cart';
 
 export default function CustomerOrders() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const fetchOrders = async (showLoading = true) => {
+        if (showLoading) setLoading(true);
+        else setIsRefreshing(true);
+        
+        try {
+            const response = await fetch('/api/customer/orders');
+            if (response.ok) {
+                const data = await response.json();
+                setOrders(Array.isArray(data?.data) ? data.data : data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch orders', error);
+        } finally {
+            setLoading(false);
+            setIsRefreshing(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchOrders = async () => {
-            setLoading(true);
-            try {
-                const response = await fetch('/api/customer/orders');
-                if (response.ok) {
-                    const data = await response.json();
-                    setOrders(Array.isArray(data?.data) ? data.data : data);
-                }
-            } catch (error) {
-                // handle error
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchOrders();
+        // Poll for updates every 30 seconds
+        const interval = setInterval(() => fetchOrders(false), 30000);
+        return () => clearInterval(interval);
     }, []);
+
+    const handleReorder = (order: Order) => {
+        const currentCart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+        
+        const newItems = order.items.map(item => ({
+            id: item.menu_item.id,
+            name: item.menu_item.name,
+            price_cents: item.menu_item.price_cents,
+            quantity: item.quantity
+        }));
+
+        const updatedCart = [...currentCart];
+        
+        newItems.forEach(newItem => {
+            const existing = updatedCart.find((c: any) => c.id === newItem.id);
+            if (existing) {
+                existing.quantity += newItem.quantity;
+            } else {
+                updatedCart.push(newItem);
+            }
+        });
+
+        localStorage.setItem(CART_KEY, JSON.stringify(updatedCart));
+        router.visit('/cart');
+    };
+
+    const activeOrders = orders.filter(o => ['pending', 'preparing', 'ready', 'assigned', 'picked_up'].includes(o.status));
+    const pastOrders = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
 
     return (
         <CustomerLayout>
@@ -67,79 +117,119 @@ export default function CustomerOrders() {
             <div className="container mx-auto p-4 sm:p-8">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold">My Orders</h1>
-                        <p className="text-sm text-muted-foreground">
-                            View your order history and track current orders
+                        <h1 className="text-3xl font-bold tracking-tight">My Orders</h1>
+                        <p className="text-muted-foreground">
+                            Track your active orders and view history
                         </p>
                     </div>
+                    <Button variant="outline" size="sm" onClick={() => fetchOrders(false)} disabled={isRefreshing}>
+                        <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
                 </div>
 
-                <div className="space-y-4 max-w-3xl mx-auto">
-                    {loading && <p className="text-sm text-muted-foreground">Loading orders...</p>}
-                    
-                    {!loading && orders.length === 0 && (
-                        <Card>
-                            <CardContent className="py-8 text-center">
-                                <p className="text-muted-foreground">No orders yet</p>
-                                <p className="mt-2 text-sm text-muted-foreground">
-                                    Start ordering from our menu!
-                                </p>
-                            </CardContent>
-                        </Card>
-                    )}
+                {loading ? (
+                    <div className="flex justify-center py-12">
+                        <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                ) : (
+                    <Tabs defaultValue="active" className="space-y-6">
+                        <TabsList>
+                            <TabsTrigger value="active">Active Orders ({activeOrders.length})</TabsTrigger>
+                            <TabsTrigger value="history">Order History</TabsTrigger>
+                        </TabsList>
 
-                    {orders.map((order) => (
-                        <Card key={order.id}>
-                            <CardHeader>
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <CardTitle className="text-lg">Order #{order.id}</CardTitle>
-                                        <p className="text-sm text-muted-foreground">
-                                            {new Date(order.created_at).toLocaleDateString('en-US', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })}
-                                        </p>
-                                    </div>
-                                    <Badge className={getStatusColor(order.status)}>
-                                        {order.status}
-                                    </Badge>
+                        <TabsContent value="active" className="space-y-4">
+                            {activeOrders.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-64 border rounded-xl bg-muted/10 text-muted-foreground">
+                                    <Package className="h-12 w-12 mb-4 opacity-20" />
+                                    <p>No active orders at the moment.</p>
+                                    <Button variant="link" onClick={() => router.visit('/shop')}>
+                                        Browse Menu
+                                    </Button>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-3">
-                                    {order.items && order.items.length > 0 && (
-                                        <div className="space-y-2">
-                                            <p className="text-sm font-medium">Items:</p>
-                                            {order.items.map((item) => (
-                                                <div key={item.id} className="flex justify-between text-sm">
-                                                    <span className="text-muted-foreground">
-                                                        {item.quantity}x {item.name}
-                                                    </span>
-                                                    <span>{formatCurrency(item.price_cents * item.quantity)}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <div className="flex justify-between border-t pt-3 font-semibold">
-                                        <span>Total</span>
-                                        <span>{formatCurrency(order.total_cents)}</span>
-                                    </div>
-                                    {order.guest_address && (
-                                        <div className="border-t pt-3 text-sm text-muted-foreground">
-                                            <p className="font-medium">Delivery Address:</p>
-                                            <p>{order.guest_address}</p>
-                                        </div>
-                                    )}
+                            ) : (
+                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                    {activeOrders.map((order) => (
+                                        <OrderCard key={order.id} order={order} />
+                                    ))}
                                 </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+                            )}
+                        </TabsContent>
+
+                        <TabsContent value="history" className="space-y-4">
+                            {pastOrders.length === 0 ? (
+                                <div className="text-center py-10 text-muted-foreground">No order history found.</div>
+                            ) : (
+                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                    {pastOrders.map((order) => (
+                                        <OrderCard key={order.id} order={order} onReorder={() => handleReorder(order)} />
+                                    ))}
+                                </div>
+                            )}
+                        </TabsContent>
+                    </Tabs>
+                )}
             </div>
         </CustomerLayout>
+    );
+}
+
+function OrderCard({ order, onReorder }: { order: Order; onReorder?: () => void }) {
+    const status = getStatusConfig(order.status);
+    const StatusIcon = status.icon;
+
+    return (
+        <Card className="flex flex-col overflow-hidden border-l-4" style={{ borderLeftColor: 'var(--border-l-color)' }}>
+            <div className={`h-1 w-full ${status.color}`} />
+            <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-lg">Order #{order.id}</CardTitle>
+                        <p className="text-xs text-muted-foreground">
+                            {new Date(order.created_at).toLocaleString()}
+                        </p>
+                    </div>
+                    <Badge variant="outline" className="flex items-center gap-1">
+                        <StatusIcon className="h-3 w-3" />
+                        {status.label}
+                    </Badge>
+                </div>
+            </CardHeader>
+            <CardContent className="flex-1 space-y-4">
+                <div className="space-y-1">
+                    {order.items.map((item) => (
+                        <div key={item.id} className="flex justify-between text-sm">
+                            <span>
+                                <span className="font-medium">{item.quantity}x</span> {item.menu_item.name}
+                            </span>
+                            <span className="text-muted-foreground">
+                                {formatCurrency(item.total_price_cents)}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="pt-2 border-t flex justify-between items-center">
+                    <span className="font-medium">Total</span>
+                    <span className="font-bold text-lg">{formatCurrency(order.total_cents)}</span>
+                </div>
+
+                {order.guest_address && (
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+                        <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+                        <span>{order.guest_address}</span>
+                    </div>
+                )}
+            </CardContent>
+            {onReorder && (
+                <CardFooter className="pt-2">
+                    <Button variant="outline" className="w-full" onClick={onReorder}>
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Reorder
+                    </Button>
+                </CardFooter>
+            )}
+        </Card>
     );
 }

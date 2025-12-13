@@ -146,7 +146,7 @@ return [
     'features' => [
         Features::registration(),
         Features::resetPasswords(),
-        // Features::emailVerification(),  // Disabled: use mail service (Mailtrap, Resend, etc.) to enable
+        Features::emailVerification(),
         Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,

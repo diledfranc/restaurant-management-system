@@ -19,7 +19,7 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect('/shop');
 });
 
 test('new users are assigned the customer role', function () {
@@ -34,7 +34,7 @@ test('new users are assigned the customer role', function () {
         'phone' => '+15555550124',
         'password' => 'password',
         'password_confirmation' => 'password',
-    ])->assertRedirect(route('dashboard', absolute: false));
+    ])->assertRedirect('/shop');
 
     $user = User::where('email', $email)->firstOrFail();
     expect($user->roles()->pluck('name'))->toContain('customer');

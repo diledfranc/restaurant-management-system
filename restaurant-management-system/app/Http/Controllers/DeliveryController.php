@@ -19,7 +19,10 @@ class DeliveryController extends Controller
         $query = Delivery::with(['order','staff']);
 
         if ($request->user()->role->name === 'staff') {
-            $query->where('assigned_user_id', $request->user()->id);
+            $query->where(function ($q) use ($request) {
+                $q->where('assigned_user_id', $request->user()->id)
+                  ->orWhere('status', 'pending');
+            });
         }
 
         $deliveries = $query->orderBy('created_at', 'desc')->paginate(15);
@@ -33,7 +36,10 @@ class DeliveryController extends Controller
         $query = Delivery::with(['order','staff']);
 
         if ($request->user()->role->name === 'staff') {
-            $query->where('assigned_user_id', $request->user()->id);
+            $query->where(function ($q) use ($request) {
+                $q->where('assigned_user_id', $request->user()->id)
+                  ->orWhere('status', 'pending');
+            });
         }
 
         if ($request->filled('status')) {

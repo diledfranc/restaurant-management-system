@@ -16,6 +16,9 @@ class DeliveryResource extends JsonResource
                     'id' => $this->order->id,
                     'status' => $this->order->status,
                     'total_cents' => $this->order->total_cents,
+                    'guest_name' => $this->order->guest_name ?? $this->order->user->name ?? 'Guest',
+                    'guest_phone' => $this->order->guest_phone ?? $this->order->user->phone ?? '-',
+                    'guest_address' => $this->order->guest_address ?? 'No address provided',
                 ];
             }),
             'assigned_user' => $this->whenLoaded('staff', function () {

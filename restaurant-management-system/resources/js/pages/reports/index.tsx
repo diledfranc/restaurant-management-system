@@ -6,6 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    LineChart,
+    Line,
+    Legend
+} from 'recharts';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Reports', href: '/reports' },
@@ -17,7 +29,7 @@ type SalesRow = {
     orders_count: number;
 };
 
-type LowSellingRow = {
+type ItemRow = {
     menu_item_id: number;
     name?: string | null;
     total_sold: number;
@@ -32,13 +44,14 @@ type ReportsPageProps = {
         avg_order_cents: number;
     };
     sales: SalesRow[];
-    lowSelling: LowSellingRow[];
+    topSelling: ItemRow[];
+    lowSelling: ItemRow[];
 };
 
 const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
 
 export default function ReportsIndex() {
-    const { summary, sales, lowSelling } = usePage<ReportsPageProps>().props;
+    const { summary, sales, topSelling, lowSelling } = usePage<ReportsPageProps>().props;
     const [from, setFrom] = useState(summary.from);
     const [to, setTo] = useState(summary.to);
 
@@ -46,6 +59,12 @@ export default function ReportsIndex() {
         e.preventDefault();
         router.get('/reports', { from, to }, { preserveState: true, replace: true });
     };
+
+    // Prepare data for charts
+    const salesData = sales.map(s => ({
+        ...s,
+        revenue: s.total_cents / 100,
+    }));
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -96,52 +115,58 @@ export default function ReportsIndex() {
                     </Card>
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                    <Card className="overflow-hidden">
+                <Card className="col-span-full">
+                    <CardHeader>
+                        <CardTitle>Sales Trend</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={salesData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="day" />
+                                <YAxis yAxisId="left" />
+                                <YAxis yAxisId="right" orientation="right" />
+                                <Tooltip formatter={(value: any, name: any) => [name === 'revenue' ? `฿${value}` : value, name === 'revenue' ? 'Revenue' : 'Orders']} />
+                                <Legend />
+                                <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#8884d8" activeDot={{ r: 8 }} name="Revenue" />
+                                <Line yAxisId="right" type="monotone" dataKey="orders_count" stroke="#82ca9d" name="Orders" />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
                         <CardHeader>
-                            <CardTitle>Sales trend</CardTitle>
+                            <CardTitle>Top Selling Items</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2">
-                            <div className="grid grid-cols-3 text-sm font-semibold text-muted-foreground">
-                                <span>Date</span>
-                                <span className="text-right">Orders</span>
-                                <span className="text-right">Revenue</span>
-                            </div>
-                            <div className="divide-y">
-                                {sales.length === 0 && (
-                                    <p className="py-2 text-sm text-muted-foreground">No sales in this range.</p>
-                                )}
-                                {sales.map((row) => (
-                                    <div key={row.day} className="grid grid-cols-3 py-1 text-sm">
-                                        <span>{row.day}</span>
-                                        <span className="text-right">{row.orders_count}</span>
-                                        <span className="text-right">{formatCurrency(row.total_cents)}</span>
-                                    </div>
-                                ))}
-                            </div>
+                        <CardContent className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart layout="vertical" data={topSelling} margin={{ left: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis type="number" />
+                                    <YAxis dataKey="name" type="category" width={100} />
+                                    <Tooltip />
+                                    <Bar dataKey="total_sold" fill="#82ca9d" name="Units Sold" />
+                                </BarChart>
+                            </ResponsiveContainer>
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden">
+                    <Card>
                         <CardHeader>
-                            <CardTitle>Low-selling items</CardTitle>
+                            <CardTitle>Low Selling Items</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2">
-                            <div className="grid grid-cols-2 text-sm font-semibold text-muted-foreground">
-                                <span>Item</span>
-                                <span className="text-right">Units sold</span>
-                            </div>
-                            <div className="divide-y">
-                                {lowSelling.length === 0 && (
-                                    <p className="py-2 text-sm text-muted-foreground">No items in this range.</p>
-                                )}
-                                {lowSelling.map((row) => (
-                                    <div key={row.menu_item_id} className="grid grid-cols-2 py-1 text-sm">
-                                        <span>{row.name ?? 'Item #' + row.menu_item_id}</span>
-                                        <span className="text-right">{row.total_sold}</span>
-                                    </div>
-                                ))}
-                            </div>
+                        <CardContent className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart layout="vertical" data={lowSelling} margin={{ left: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis type="number" />
+                                    <YAxis dataKey="name" type="category" width={100} />
+                                    <Tooltip />
+                                    <Bar dataKey="total_sold" fill="#ff8042" name="Units Sold" />
+                                </BarChart>
+                            </ResponsiveContainer>
                         </CardContent>
                     </Card>
                 </div>
