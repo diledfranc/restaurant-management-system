@@ -127,9 +127,14 @@ class OrderController extends Controller
 
             // create order items
             foreach ($data['cart'] as $c) {
-                $mi = MenuItem::findOrFail($c['menu_item_id']);
+                $mi = MenuItem::with('ingredients')->findOrFail($c['menu_item_id']);
                 $qty = intval($c['quantity']);
                 $itemPrice = $mi->price_cents;
+                
+                // Deduct Menu Item Ingredients
+                foreach ($mi->ingredients as $ingredient) {
+                    $this->inventoryService->consumeStock($ingredient, $ingredient->pivot->quantity * $qty);
+                }
                 
                 $modifiersTotal = 0;
                 $modifiersCost = 0;
@@ -137,7 +142,7 @@ class OrderController extends Controller
                 
                 if (isset($c['modifiers']) && is_array($c['modifiers'])) {
                     foreach ($c['modifiers'] as $modData) {
-                        $mod = \App\Models\Modifier::find($modData['modifier_id']);
+                        $mod = \App\Models\Modifier::with('ingredients')->find($modData['modifier_id']);
                         if ($mod) {
                             $modifiersTotal += $mod->price_cents;
                             $modifiersCost += $mod->cost_cents;
@@ -145,6 +150,11 @@ class OrderController extends Controller
                                 'modifier_name' => $mod->name,
                                 'price_cents' => $mod->price_cents
                             ];
+
+                            // Deduct Modifier Ingredients
+                            foreach ($mod->ingredients as $ingredient) {
+                                $this->inventoryService->consumeStock($ingredient, $ingredient->pivot->quantity * $qty);
+                            }
                         }
                     }
                 }
@@ -164,27 +174,6 @@ class OrderController extends Controller
                 
                 if (!empty($modifierAttachments)) {
                     $orderItem->modifiers()->attach($modifierAttachments);
-                }
-
-                // Deduct stock for Menu Item
-                $mi->load('ingredients');
-                foreach ($mi->ingredients as $ingredient) {
-                    $quantityToDeduct = $ingredient->pivot->quantity * $qty;
-                    $this->inventoryService->consumeStock($ingredient, $quantityToDeduct);
-                }
-
-                // Deduct stock for Modifiers
-                if (isset($c['modifiers']) && is_array($c['modifiers'])) {
-                    foreach ($c['modifiers'] as $modData) {
-                        $mod = \App\Models\Modifier::find($modData['modifier_id']);
-                        if ($mod) {
-                            $mod->load('ingredients');
-                            foreach ($mod->ingredients as $modIngredient) {
-                                $quantityToDeduct = $modIngredient->pivot->quantity * $qty;
-                                $this->inventoryService->consumeStock($modIngredient, $quantityToDeduct);
-                            }
-                        }
-                    }
                 }
             }
 

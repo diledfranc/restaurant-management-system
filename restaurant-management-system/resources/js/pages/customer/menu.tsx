@@ -48,6 +48,7 @@ interface Category {
 }
 
 interface CartLine {
+    cartId: string;
     id: number;
     name: string;
     price_cents: number;
@@ -147,11 +148,6 @@ export default function CustomerMenuPage() {
     }, [items, search]);
 
     const openCustomization = (item: MenuItem) => {
-        if (!auth.user) {
-            setShowLoginDialog(true);
-            return;
-        }
-
         if (item.modifier_groups && item.modifier_groups.length > 0) {
             setCustomizingItem(item);
             // Initialize default selections if needed, or empty
@@ -180,6 +176,7 @@ export default function CustomerMenuPage() {
             const modifiersTotal = modifiers.reduce((sum, m) => sum + m.price_cents, 0);
             
             return [...prev, { 
+                cartId: crypto.randomUUID(),
                 id: item.id, 
                 name: item.name, 
                 price_cents: item.price_cents + modifiersTotal, 
@@ -395,7 +392,7 @@ export default function CustomerMenuPage() {
                                     </div>
                                 )}
                                 {cart.map((line, idx) => (
-                                    <div key={`${line.id}-${idx}`} className="flex items-start justify-between gap-3 pb-3 border-b last:border-0 last:pb-0">
+                                    <div key={line.cartId || `${line.id}-${idx}`} className="flex items-start justify-between gap-3 pb-3 border-b last:border-0 last:pb-0">
                                         <div className="flex-1 min-w-0">
                                             <p className="font-medium truncate">{line.name}</p>
                                             {line.modifiers && line.modifiers.length > 0 && (
@@ -423,11 +420,7 @@ export default function CustomerMenuPage() {
                                         className="w-full"
                                         size="lg"
                                         onClick={() => {
-                                            if (!auth.user) {
-                                                setShowLoginDialog(true);
-                                            } else {
-                                                router.visit('/shop/checkout');
-                                            }
+                                            router.visit('/shop/checkout');
                                         }}
                                     >
                                         Checkout <ArrowRight className="ml-2 h-4 w-4" />

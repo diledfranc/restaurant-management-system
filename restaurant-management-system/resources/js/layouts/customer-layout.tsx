@@ -17,6 +17,8 @@ export default function CustomerLayout({ children }: PropsWithChildren) {
                         const count = cart.reduce((acc: number, item: any) => acc + (item.quantity || 0), 0);
                         setCartCount(count);
                     }
+                } else {
+                    setCartCount(0);
                 }
             } catch (e) {
                 console.error('Failed to parse cart', e);
@@ -24,6 +26,14 @@ export default function CustomerLayout({ children }: PropsWithChildren) {
         };
         
         updateCount();
+
+        window.addEventListener('cart-updated', updateCount);
+        window.addEventListener('storage', updateCount); // For cross-tab updates
+
+        return () => {
+            window.removeEventListener('cart-updated', updateCount);
+            window.removeEventListener('storage', updateCount);
+        };
     }, []);
 
     return (

@@ -15,10 +15,17 @@ import {
 } from "@/components/ui/dialog";
 
 interface CartLine {
+    cartId: string;
     id: number;
     name: string;
     price_cents: number;
     quantity: number;
+    modifiers?: {
+        group_name: string;
+        option_name: string;
+        price_cents: number;
+        modifier_id: number;
+    }[];
 }
 
 const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
@@ -55,9 +62,9 @@ export default function CartPage() {
         }
     }, [cart, loading]);
 
-    const updateQuantity = (id: number, delta: number) => {
+    const updateQuantity = (cartId: string, delta: number) => {
         setCart(prev => prev.map(item => {
-            if (item.id === id) {
+            if (item.cartId === cartId) {
                 const newQty = Math.max(1, item.quantity + delta);
                 return { ...item, quantity: newQty };
             }
@@ -65,8 +72,8 @@ export default function CartPage() {
         }));
     };
 
-    const removeItem = (id: number) => {
-        setCart(prev => prev.filter(item => item.id !== id));
+    const removeItem = (cartId: string) => {
+        setCart(prev => prev.filter(item => item.cartId !== cartId));
     };
 
     const clearCart = () => {
@@ -81,11 +88,7 @@ export default function CartPage() {
     );
 
     const handleCheckout = () => {
-        if (!auth.user) {
-            setShowLoginDialog(true);
-        } else {
-            router.visit('/shop/checkout');
-        }
+        router.visit('/shop/checkout');
     };
 
     if (loading) {
@@ -132,10 +135,17 @@ export default function CartPage() {
                                 </CardHeader>
                                 <CardContent className="divide-y">
                                     {cart.map((item) => (
-                                        <div key={item.id} className="py-4 flex items-center justify-between gap-4">
+                                        <div key={item.cartId} className="py-4 flex items-center justify-between gap-4">
                                             <div className="flex-1">
                                                 <h3 className="font-medium text-lg">{item.name}</h3>
-                                                <p className="text-muted-foreground">{formatCurrency(item.price_cents)} each</p>
+                                                {item.modifiers && item.modifiers.length > 0 && (
+                                                    <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
+                                                        {item.modifiers.map((mod, i) => (
+                                                            <div key={i}>+ {mod.option_name} ({formatCurrency(mod.price_cents)})</div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                <p className="text-muted-foreground mt-1">{formatCurrency(item.price_cents)} each</p>
                                             </div>
                                             
                                             <div className="flex items-center gap-3">
@@ -144,7 +154,7 @@ export default function CartPage() {
                                                         variant="ghost" 
                                                         size="icon" 
                                                         className="h-8 w-8 rounded-none"
-                                                        onClick={() => item.quantity > 1 ? updateQuantity(item.id, -1) : removeItem(item.id)}
+                                                        onClick={() => item.quantity > 1 ? updateQuantity(item.cartId, -1) : removeItem(item.cartId)}
                                                     >
                                                         <Minus className="h-3 w-3" />
                                                     </Button>
@@ -153,7 +163,7 @@ export default function CartPage() {
                                                         variant="ghost" 
                                                         size="icon" 
                                                         className="h-8 w-8 rounded-none"
-                                                        onClick={() => updateQuantity(item.id, 1)}
+                                                        onClick={() => updateQuantity(item.cartId, 1)}
                                                     >
                                                         <Plus className="h-3 w-3" />
                                                     </Button>
@@ -161,8 +171,8 @@ export default function CartPage() {
                                                 <Button 
                                                     variant="ghost" 
                                                     size="icon" 
-                                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                    onClick={() => removeItem(item.id)}
+                                                    className="text-destructive"
+                                                    onClick={() => removeItem(item.cartId)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>

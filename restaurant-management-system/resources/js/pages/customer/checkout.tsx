@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 
 interface CartLine {
+    cartId: string;
     id: number;
     name: string;
     price_cents: number;
@@ -60,6 +61,7 @@ export default function CustomerCheckoutPage() {
             cart: cart.map((line) => ({
                 menu_item_id: line.id,
                 quantity: line.quantity,
+                modifiers: line.modifiers?.map(m => ({ modifier_id: m.modifier_id })) || []
             })),
         };
 
