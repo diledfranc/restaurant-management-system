@@ -16,7 +16,7 @@ class UpdateDeliveryStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'required|in:assigned,accepted,picked_up,on_route,delivered'
+            'status' => 'required|in:pending,assigned,accepted,picked_up,on_route,delivered,cancelled'
         ];
     }
 }

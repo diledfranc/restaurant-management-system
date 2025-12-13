@@ -23,7 +23,12 @@ class DeliveryPolicy
 
     public function assign(User $user, Delivery $delivery)
     {
-        return in_array($user->role?->name, ['manager','admin']);
+        if (in_array($user->role?->name, ['manager','admin'])) {
+            return true;
+        }
+        
+        // Allow staff to claim pending deliveries
+        return $user->role?->name === 'staff' && $delivery->status === 'pending';
     }
 
     public function updateStatus(User $user, Delivery $delivery)

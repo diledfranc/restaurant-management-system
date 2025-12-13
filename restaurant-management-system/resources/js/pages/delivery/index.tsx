@@ -37,6 +37,12 @@ interface DeliveryPageProps {
     deliveries: {
         data: Delivery[];
     };
+    auth: {
+        user: {
+            id: number;
+            name: string;
+        }
+    };
 }
 
 const formatCurrency = (cents?: number) => {
@@ -45,7 +51,7 @@ const formatCurrency = (cents?: number) => {
 };
 
 export default function DeliveryPage() {
-    const { deliveries } = usePage<DeliveryPageProps>().props;
+    const { deliveries, auth } = usePage<DeliveryPageProps>().props;
     const [loadingIds, setLoadingIds] = useState<number[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -64,6 +70,26 @@ export default function DeliveryPage() {
             preserveScroll: true,
             onFinish: () => setIsRefreshing(false)
         });
+    };
+
+    const handleAssign = async (deliveryId: number) => {
+        setLoadingIds((ids) => [...ids, deliveryId]);
+        try {
+            const response = await fetch(`/api/deliveries/${deliveryId}/assign`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-XSRF-TOKEN': document.querySelector('[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ assigned_user_id: auth.user.id }),
+            });
+
+            if (response.ok) {
+                router.reload({ only: ['deliveries'], preserveScroll: true });
+            }
+        } finally {
+            setLoadingIds((ids) => ids.filter((id) => id !== deliveryId));
+        }
     };
 
     const handleStatusUpdate = async (deliveryId: number, nextStatus: string) => {
@@ -86,7 +112,7 @@ export default function DeliveryPage() {
         }
     };
 
-    const activeDeliveries = deliveries.data.filter(d => ['pending', 'assigned', 'picked_up'].includes(d.status));
+    const activeDeliveries = deliveries.data.filter(d => ['pending', 'assigned', 'accepted', 'picked_up', 'on_route'].includes(d.status));
     const historyDeliveries = deliveries.data.filter(d => ['delivered', 'cancelled'].includes(d.status));
 
     return (
@@ -124,6 +150,7 @@ export default function DeliveryPage() {
                                         delivery={delivery} 
                                         loading={loadingIds.includes(delivery.id)}
                                         onUpdateStatus={handleStatusUpdate}
+                                        onAssign={handleAssign}
                                     />
                                 ))}
                             </div>
@@ -156,18 +183,22 @@ function DeliveryCard({
     delivery, 
     loading, 
     onUpdateStatus, 
+    onAssign,
     isHistory = false 
 }: { 
     delivery: Delivery; 
     loading: boolean; 
     onUpdateStatus?: (id: number, status: string) => void;
+    onAssign?: (id: number) => void;
     isHistory?: boolean;
 }) {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'pending': return 'bg-yellow-500';
             case 'assigned': return 'bg-blue-500';
+            case 'accepted': return 'bg-blue-600';
             case 'picked_up': return 'bg-purple-500';
+            case 'on_route': return 'bg-indigo-500';
             case 'delivered': return 'bg-green-500';
             case 'cancelled': return 'bg-red-500';
             default: return 'bg-gray-500';
@@ -230,18 +261,27 @@ function DeliveryCard({
                 )}
             </CardContent>
             
-            {!isHistory && onUpdateStatus && (
+            {!isHistory && onUpdateStatus && onAssign && (
                 <CardFooter className="pt-2 gap-2">
                     {delivery.status === 'pending' && (
                         <Button 
                             className="w-full" 
-                            onClick={() => onUpdateStatus(delivery.id, 'assigned')}
+                            onClick={() => onAssign(delivery.id)}
                             disabled={loading}
                         >
                             {loading ? 'Processing...' : 'Assign to Me'}
                         </Button>
                     )}
                     {delivery.status === 'assigned' && (
+                        <Button 
+                            className="w-full bg-blue-600 hover:bg-blue-700" 
+                            onClick={() => onUpdateStatus(delivery.id, 'accepted')}
+                            disabled={loading}
+                        >
+                            {loading ? 'Processing...' : 'Accept Delivery'}
+                        </Button>
+                    )}
+                    {delivery.status === 'accepted' && (
                         <Button 
                             className="w-full bg-purple-600 hover:bg-purple-700" 
                             onClick={() => onUpdateStatus(delivery.id, 'picked_up')}
@@ -251,6 +291,15 @@ function DeliveryCard({
                         </Button>
                     )}
                     {delivery.status === 'picked_up' && (
+                        <Button 
+                            className="w-full bg-indigo-600 hover:bg-indigo-700" 
+                            onClick={() => onUpdateStatus(delivery.id, 'on_route')}
+                            disabled={loading}
+                        >
+                            {loading ? 'Processing...' : 'Start Route'}
+                        </Button>
+                    )}
+                    {delivery.status === 'on_route' && (
                         <Button 
                             className="w-full bg-green-600 hover:bg-green-700" 
                             onClick={() => onUpdateStatus(delivery.id, 'delivered')}

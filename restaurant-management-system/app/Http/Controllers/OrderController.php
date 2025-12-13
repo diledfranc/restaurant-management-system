@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Delivery;
 use App\Models\MenuItem;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
@@ -115,6 +116,14 @@ class OrderController extends Controller
                 'payment_method' => $data['payment_method'],
                 'status' => 'placed',
             ]);
+
+            // Auto-create delivery record if address is provided
+            if (!empty($data['guest_address'])) {
+                Delivery::create([
+                    'order_id' => $order->id,
+                    'status' => 'pending',
+                ]);
+            }
 
             // create order items
             foreach ($data['cart'] as $c) {

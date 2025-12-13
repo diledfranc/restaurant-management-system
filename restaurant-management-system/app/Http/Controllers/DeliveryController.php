@@ -100,6 +100,13 @@ class DeliveryController extends Controller
 
         if ($request->status === 'picked_up') {
             $delivery->pickup_time = Carbon::now();
+            $delivery->order->status = 'on_way';
+            $delivery->order->save();
+        }
+
+        if ($request->status === 'on_route') {
+            $delivery->order->status = 'on_way';
+            $delivery->order->save();
         }
 
         if ($request->status === 'delivered') {
