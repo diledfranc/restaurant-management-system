@@ -66,9 +66,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/orders', [OrderController::class, 'pageIndex'])->name('orders.index');
         Route::get('/reports', [ReportController::class, 'pageIndex'])->name('reports.index');
         Route::get('/delivery', [DeliveryController::class, 'pageIndex'])->name('delivery.index');
-        Route::get('/reservations', function () {
-            return Inertia::render('reservations/index');
-        })->name('reservations.index');
+        
+        // Reservations
+        Route::get('/reservations', [App\Http\Controllers\ReservationController::class, 'index'])->name('reservations.index');
+        Route::post('/reservations', [App\Http\Controllers\ReservationController::class, 'store'])->name('reservations.store');
+        Route::put('/reservations/{reservation}', [App\Http\Controllers\ReservationController::class, 'update'])->name('reservations.update');
+        Route::delete('/reservations/{reservation}', [App\Http\Controllers\ReservationController::class, 'destroy'])->name('reservations.destroy');
     });
 
     // POS & Kitchen
