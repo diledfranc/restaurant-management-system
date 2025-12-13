@@ -17,8 +17,8 @@ class DashboardController extends Controller
         $user = $request->user();
         // $roles = $user->roles->pluck('name'); 
 
-        // If not manager/admin, just return basic dashboard
-        if (!$user->hasRole(['manager', 'admin'])) {
+        // If not manager/admin/kitchen, just return basic dashboard
+        if (!$user->hasRole(['manager', 'admin', 'kitchen', 'staff'])) {
             return Inertia::render('dashboard');
         }
 
@@ -26,7 +26,7 @@ class DashboardController extends Controller
         // We fetch recent orders to populate the board.
         $orders = Order::with(['user', 'items.menuItem', 'assignedStaff'])
             ->whereDate('created_at', '>=', Carbon::now()->subDays(1)) // Last 24 hours for "Live" feel, or just active
-            ->whereIn('status', ['placed', 'preparing', 'on_way'])
+            ->whereIn('status', ['placed', 'preparing', 'ready', 'on_way'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($order) {

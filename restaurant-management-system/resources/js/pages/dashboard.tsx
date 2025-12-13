@@ -62,6 +62,7 @@ export default function Dashboard({ orders = [], stats, best_selling = [], low_s
     const isManager = roles.includes('manager');
     const isStaff = roles.includes('staff');
     const isCashier = roles.includes('cashier');
+    const isKitchen = roles.includes('kitchen');
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     useEffect(() => {
@@ -81,11 +82,35 @@ export default function Dashboard({ orders = [], stats, best_selling = [], low_s
         });
     };
 
+    const updateStatus = async (orderId: number, status: string) => {
+        try {
+            const url = isKitchen 
+                ? `/api/kitchen/orders/${orderId}/status` 
+                : `/api/orders/${orderId}/status`;
+
+            const res = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-XSRF-TOKEN': document.querySelector('[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ status }),
+            });
+
+            if (res.ok) {
+                router.reload({ only: ['orders', 'stats'], preserveScroll: true });
+            }
+        } catch (error) {
+            console.error('Failed to update status', error);
+        }
+    };
+
     // Group orders by status for the Kanban board
     const pendingOrders = orders.filter(o => o.status === 'pending');
     const preparingOrders = orders.filter(o => o.status === 'preparing');
     const readyOrders = orders.filter(o => o.status === 'ready');
     const outForDeliveryOrders = orders.filter(o => o.status === 'out_for_delivery');
+    const completedOrders = [...readyOrders, ...outForDeliveryOrders];
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-PH', {
@@ -173,10 +198,10 @@ export default function Dashboard({ orders = [], stats, best_selling = [], low_s
                     </div>
                 )}
 
-                <Tabs defaultValue="overview" className="space-y-4">
+                <Tabs defaultValue={isKitchen ? "live-orders" : "overview"} className="space-y-4">
                     <TabsList>
                         <TabsTrigger value="overview">Overview</TabsTrigger>
-                        {(isManager || isStaff) && <TabsTrigger value="live-orders">Live Orders</TabsTrigger>}
+                        {(isManager || isStaff || isKitchen) && <TabsTrigger value="live-orders">Live Orders</TabsTrigger>}
                         {(isManager || isAdmin) && <TabsTrigger value="analytics">Analytics</TabsTrigger>}
                     </TabsList>
 
@@ -285,7 +310,7 @@ export default function Dashboard({ orders = [], stats, best_selling = [], low_s
                     </TabsContent>
 
                     {/* Live Orders Board */}
-                    {(isManager || isStaff) && (
+                    {(isManager || isStaff || isKitchen) && (
                         <TabsContent value="live-orders" className="space-y-4">
                             <div className="grid gap-4 md:grid-cols-3">
                                 {/* Pending Column */}
@@ -296,7 +321,13 @@ export default function Dashboard({ orders = [], stats, best_selling = [], low_s
                                     </div>
                                     <div className="space-y-3">
                                         {pendingOrders.map(order => (
-                                            <OrderCard key={order.id} order={order} formatCurrency={formatCurrency} />
+                                            <OrderCard 
+                                                key={order.id} 
+                                                order={order} 
+                                                formatCurrency={formatCurrency} 
+                                                onUpdateStatus={updateStatus}
+                                                canManage={isManager || isKitchen}
+                                            />
                                         ))}
                                         {pendingOrders.length === 0 && <EmptyState />}
                                     </div>
@@ -310,7 +341,13 @@ export default function Dashboard({ orders = [], stats, best_selling = [], low_s
                                     </div>
                                     <div className="space-y-3">
                                         {preparingOrders.map(order => (
-                                            <OrderCard key={order.id} order={order} formatCurrency={formatCurrency} />
+                                            <OrderCard 
+                                                key={order.id} 
+                                                order={order} 
+                                                formatCurrency={formatCurrency} 
+                                                onUpdateStatus={updateStatus}
+                                                canManage={isManager || isKitchen}
+                                            />
                                         ))}
                                         {preparingOrders.length === 0 && <EmptyState />}
                                     </div>
@@ -319,14 +356,20 @@ export default function Dashboard({ orders = [], stats, best_selling = [], low_s
                                 {/* Out for Delivery / Completed Column */}
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="font-semibold text-sm text-orange-500 uppercase">Out for Delivery</h3>
-                                        <Badge variant="secondary">{outForDeliveryOrders.length}</Badge>
+                                        <h3 className="font-semibold text-sm text-orange-500 uppercase">Ready / Delivery</h3>
+                                        <Badge variant="secondary">{completedOrders.length}</Badge>
                                     </div>
                                     <div className="space-y-3">
-                                        {outForDeliveryOrders.map(order => (
-                                            <OrderCard key={order.id} order={order} formatCurrency={formatCurrency} />
+                                        {completedOrders.map(order => (
+                                            <OrderCard 
+                                                key={order.id} 
+                                                order={order} 
+                                                formatCurrency={formatCurrency} 
+                                                onUpdateStatus={updateStatus}
+                                                canManage={isManager || isKitchen}
+                                            />
                                         ))}
-                                        {outForDeliveryOrders.length === 0 && <EmptyState />}
+                                        {completedOrders.length === 0 && <EmptyState />}
                                     </div>
                                 </div>
                             </div>
@@ -443,12 +486,24 @@ export default function Dashboard({ orders = [], stats, best_selling = [], low_s
     );
 }
 
-function OrderCard({ order, formatCurrency }: { order: Order; formatCurrency: (val: number) => string }) {
+function OrderCard({ 
+    order, 
+    formatCurrency, 
+    onUpdateStatus, 
+    canManage 
+}: { 
+    order: Order; 
+    formatCurrency: (val: number) => string;
+    onUpdateStatus?: (id: number, status: string) => void;
+    canManage?: boolean;
+}) {
     return (
         <Card className="p-3 hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-2">
                 <span className="font-bold text-sm">#{order.order_number}</span>
-                <Badge variant="outline" className="text-xs">{order.type}</Badge>
+                <Badge variant={order.status === 'pending' ? 'secondary' : order.status === 'preparing' ? 'default' : 'outline'} className="text-xs">
+                    {order.status.replace('_', ' ')}
+                </Badge>
             </div>
             <div className="text-sm mb-2">
                 <p className="font-medium">{order.customer_name}</p>
@@ -458,10 +513,34 @@ function OrderCard({ order, formatCurrency }: { order: Order; formatCurrency: (v
                 <span>{order.items_count} items</span>
                 <span className="font-semibold text-foreground">{formatCurrency(order.total_amount)}</span>
             </div>
-            <div className="mt-2">
-                 <Link href={ordersRoute.index().url} className="w-full block text-center text-xs bg-primary text-primary-foreground py-1 rounded hover:bg-primary/90">
-                    Manage
+            <div className="mt-2 flex gap-2">
+                 <Link href={ordersRoute.index().url} className="flex-1 block text-center text-xs bg-secondary text-secondary-foreground py-1 rounded hover:bg-secondary/80 flex items-center justify-center">
+                    View
                 </Link>
+                {canManage && onUpdateStatus && order.status === 'pending' && (
+                    <button 
+                        onClick={() => onUpdateStatus(order.id, 'preparing')}
+                        className="flex-1 block text-center text-xs bg-blue-600 text-white py-1 rounded hover:bg-blue-700"
+                    >
+                        Prepare
+                    </button>
+                )}
+                {canManage && onUpdateStatus && order.status === 'preparing' && (
+                    <button 
+                        onClick={() => onUpdateStatus(order.id, 'ready')}
+                        className="flex-1 block text-center text-xs bg-green-600 text-white py-1 rounded hover:bg-green-700"
+                    >
+                        Ready
+                    </button>
+                )}
+                {canManage && onUpdateStatus && order.status === 'ready' && (
+                     <button 
+                        onClick={() => onUpdateStatus(order.id, 'on_way')}
+                        className="flex-1 block text-center text-xs bg-orange-600 text-white py-1 rounded hover:bg-orange-700"
+                    >
+                        Deliver
+                    </button>
+                )}
             </div>
         </Card>
     );
