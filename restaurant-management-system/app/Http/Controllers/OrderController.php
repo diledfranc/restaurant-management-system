@@ -187,6 +187,8 @@ class OrderController extends Controller
                 'ip' => $request->ip(),
             ]);
 
+            \App\Events\OrderPlaced::dispatch($order);
+
             DB::commit();
 
             return (new OrderResource($order->load('items.menuItem', 'items.modifiers', 'user')))->response()->setStatusCode(201);

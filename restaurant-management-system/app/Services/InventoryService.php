@@ -65,6 +65,13 @@ class InventoryService
             // If we allow negative stock, it means we have "untracked" inventory.
             // For now, let's just decrement.
             $ingredient->decrement('current_stock', $quantity);
+            
+            // Refresh to get the updated value from DB
+            $ingredient->refresh();
+
+            if ($ingredient->current_stock <= $ingredient->reorder_level) {
+                \App\Events\LowStockDetected::dispatch($ingredient);
+            }
         });
     }
 

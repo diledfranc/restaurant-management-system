@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useEcho } from '@laravel/echo-react';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,9 +75,17 @@ export default function KitchenIndex() {
 
     useEffect(() => {
         fetchOrders();
-        const interval = setInterval(fetchOrders, 10000); // Poll every 10s
-        return () => clearInterval(interval);
     }, []);
+
+    useEcho(
+        'kitchen',
+        'OrderPlaced',
+        () => {
+            fetchOrders();
+        },
+        [],
+        'public'
+    );
 
     const placedOrders = orders.filter(o => o.status === 'placed');
     const preparingOrders = orders.filter(o => o.status === 'preparing');

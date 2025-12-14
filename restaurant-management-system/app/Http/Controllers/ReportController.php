@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\MenuItem;
+use App\Models\WasteLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -98,12 +99,42 @@ class ReportController extends Controller
                 ];
             });
 
+        // Waste Data
+        $wasteRows = WasteLog::selectRaw("DATE(created_at) as day, SUM(loss_amount_cents) as total_loss")
+            ->whereBetween('created_at', [$from->startOfDay(), $to->endOfDay()])
+            ->groupBy('day')
+            ->orderBy('day', 'asc')
+            ->get();
+
+        $topWastedIngredients = WasteLog::select('ingredient_id', DB::raw('SUM(loss_amount_cents) as total_loss'), DB::raw('SUM(quantity) as total_quantity'))
+            ->whereBetween('created_at', [$from->startOfDay(), $to->endOfDay()])
+            ->groupBy('ingredient_id')
+            ->orderBy('total_loss', 'desc')
+            ->limit(5)
+            ->with('ingredient')
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'ingredient_name' => $r->ingredient->name,
+                    'unit' => $r->ingredient->unit,
+                    'total_loss' => (int) $r->total_loss,
+                    'total_quantity' => (float) $r->total_quantity,
+                ];
+            });
+
+        $totalSales = (int) $salesRows->sum('total_cents');
+        $totalCost = (int) $salesRows->sum('total_cost');
+        $totalWaste = (int) $wasteRows->sum('total_loss');
+        $grossProfit = (int) $salesRows->sum('gross_profit');
+
         $summary = [
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
-            'total_cents' => (int) $salesRows->sum('total_cents'),
-            'total_cost' => (int) $salesRows->sum('total_cost'),
-            'gross_profit' => (int) $salesRows->sum('gross_profit'),
+            'total_cents' => $totalSales,
+            'total_cost' => $totalCost,
+            'total_waste' => $totalWaste,
+            'gross_profit' => $grossProfit,
+            'net_profit_estimate' => $grossProfit - $totalWaste,
             'orders_count' => (int) $salesRows->sum('orders_count'),
         ];
         $summary['avg_order_cents'] = $summary['orders_count'] > 0
@@ -116,8 +147,10 @@ class ReportController extends Controller
         return Inertia::render('reports/index', [
             'summary' => $summary,
             'sales' => $salesRows,
+            'waste' => $wasteRows,
             'topSelling' => $topSellingRows,
             'lowSelling' => $lowSellingRows,
+            'topWasted' => $topWastedIngredients,
         ]);
     }
 

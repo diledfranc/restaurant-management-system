@@ -37,26 +37,42 @@ type ItemRow = {
     total_sold: number;
 };
 
+type WasteRow = {
+    day: string;
+    total_loss: number;
+};
+
+type WastedItemRow = {
+    ingredient_name: string;
+    unit: string;
+    total_loss: number;
+    total_quantity: number;
+};
+
 type ReportsPageProps = {
     summary: {
         from: string;
         to: string;
         total_cents: number;
         total_cost: number;
+        total_waste: number;
         gross_profit: number;
+        net_profit_estimate: number;
         orders_count: number;
         avg_order_cents: number;
         profit_margin: number;
     };
     sales: SalesRow[];
+    waste: WasteRow[];
     topSelling: ItemRow[];
     lowSelling: ItemRow[];
+    topWasted: WastedItemRow[];
 };
 
 const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
 
 export default function ReportsIndex() {
-    const { summary, sales, topSelling, lowSelling } = usePage<ReportsPageProps>().props;
+    const { summary, sales, waste, topSelling, lowSelling, topWasted } = usePage<ReportsPageProps>().props;
     const [from, setFrom] = useState(summary.from);
     const [to, setTo] = useState(summary.to);
 
@@ -71,6 +87,11 @@ export default function ReportsIndex() {
         revenue: s.total_cents / 100,
         cost: s.total_cost / 100,
         profit: s.gross_profit / 100,
+    }));
+
+    const wasteData = waste.map(w => ({
+        ...w,
+        loss: w.total_loss / 100,
     }));
 
     return (
@@ -129,27 +150,56 @@ export default function ReportsIndex() {
                             <p className="text-2xl font-bold">{formatCurrency(summary.avg_order_cents)}</p>
                         </CardContent>
                     </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Total Waste</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-2xl font-bold text-red-600">{formatCurrency(summary.total_waste)}</p>
+                            <p className="text-xs text-muted-foreground">Net Profit Est: {formatCurrency(summary.net_profit_estimate)}</p>
+                        </CardContent>
+                    </Card>
                 </div>
 
-                <Card className="col-span-full">
-                    <CardHeader>
-                        <CardTitle>Financial Trend</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={salesData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="day" />
-                                <YAxis />
-                                <Tooltip formatter={(value: any) => [`฿${value}`, '']} />
-                                <Legend />
-                                <Line type="monotone" dataKey="revenue" stroke="#8884d8" name="Revenue" />
-                                <Line type="monotone" dataKey="cost" stroke="#ff7300" name="Cost" />
-                                <Line type="monotone" dataKey="profit" stroke="#82ca9d" name="Profit" />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
+                <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Financial Trend</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={salesData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="day" />
+                                    <YAxis />
+                                    <Tooltip formatter={(value: any) => [`฿${value}`, '']} />
+                                    <Legend />
+                                    <Line type="monotone" dataKey="revenue" stroke="#8884d8" name="Revenue" />
+                                    <Line type="monotone" dataKey="cost" stroke="#ff7300" name="Cost" />
+                                    <Line type="monotone" dataKey="profit" stroke="#82ca9d" name="Profit" />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Waste Over Time</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={wasteData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="day" />
+                                    <YAxis />
+                                    <Tooltip formatter={(value) => `฿${value}`} />
+                                    <Legend />
+                                    <Bar dataKey="loss" fill="#dc2626" name="Waste Loss" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                     <Card>
@@ -183,6 +233,29 @@ export default function ReportsIndex() {
                                     <Bar dataKey="total_sold" fill="#ff8042" name="Units Sold" />
                                 </BarChart>
                             </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Top Wasted Ingredients</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {topWasted.map((item, idx) => (
+                                    <div key={idx} className="flex items-center justify-between border-b pb-2 last:border-0">
+                                        <div>
+                                            <p className="font-medium">{item.ingredient_name}</p>
+                                            <p className="text-xs text-muted-foreground">{item.total_quantity} {item.unit}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-red-600 font-bold">{formatCurrency(item.total_loss)}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </CardContent>
                     </Card>
                 </div>

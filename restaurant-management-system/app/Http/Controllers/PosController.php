@@ -139,6 +139,8 @@ class PosController extends Controller
                 }
             }
 
+            \App\Events\OrderPlaced::dispatch($order);
+
             DB::commit();
 
             return response()->json(['message' => 'Order created successfully', 'order_id' => $order->id], 201);
