@@ -119,7 +119,7 @@ export default function Welcome() {
                             <div>
                                 <div className="flex items-center gap-2 font-bold text-xl mb-4">
                                     <UtensilsCrossed className="h-5 w-5" />
-                                    <span>Burger King Clone</span>
+                                    <span>Momo Cafe</span>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
                                     Serving happiness, one burger at a time.
@@ -152,7 +152,7 @@ export default function Welcome() {
                             </div>
                         </div>
                         <div className="text-center text-sm text-muted-foreground pt-8 border-t">
-                            &copy; {new Date().getFullYear()} Burger King Clone. All rights reserved.
+                            &copy; {new Date().getFullYear()} Momo Cafe. All rights reserved.
                         </div>
                     </div>
                 </footer>
