@@ -40,6 +40,11 @@ RUN npm run build
 
 # Set permissions for Laravel
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Create storage link (Remove existing if present to avoid error)
+RUN rm -rf /var/www/html/public/storage
+RUN php artisan storage:link
 
 # Configure Apache DocumentRoot to point to public folder
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
