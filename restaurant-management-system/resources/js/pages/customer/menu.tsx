@@ -290,27 +290,27 @@ export default function CustomerMenuPage() {
                 </div>
             </CustomerNavbar>
 
-            <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4 sm:p-8">
-                <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:gap-6 p-3 sm:p-8">
+                <div className="flex flex-col gap-3 sm:gap-4 rounded-xl border bg-card p-4 sm:p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">
+                        <h1 className="text-xl sm:text-3xl font-bold tracking-tight">
                             {categoryFilter || 'Our Menu'}
                         </h1>
-                        <p className="text-muted-foreground mt-1">Freshly brewed coffee, delicious pastries, and more.</p>
+                        <p className="text-sm sm:text-base text-muted-foreground mt-1">Freshly brewed coffee, delicious pastries, and more.</p>
                     </div>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                         <Input
-                            placeholder="Search current page..."
+                            placeholder="Search..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full sm:w-64"
+                            className="w-full sm:w-64 h-9 sm:h-10"
                         />
                     </div>
                 </div>
 
                 <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
                     <div className="flex flex-col gap-6">
-                        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 content-start">
+                        <div className="grid gap-3 grid-cols-2 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3 content-start">
                             {loading && <p className="text-sm text-muted-foreground col-span-full text-center py-12">Loading menu...</p>}
                             {!loading && filtered.length === 0 && (
                                 <p className="text-sm text-muted-foreground col-span-full text-center py-12">No items found matching your criteria.</p>
@@ -318,7 +318,7 @@ export default function CustomerMenuPage() {
                             {filtered.map((item) => (
                                 <Card key={item.id} className="flex h-full flex-col overflow-hidden hover:shadow-md transition-shadow">
                                     {item.image_url && (
-                                        <div className="aspect-video w-full overflow-hidden bg-muted">
+                                        <div className="aspect-[4/3] sm:aspect-video w-full overflow-hidden bg-muted">
                                             <img 
                                                 src={item.image_url} 
                                                 alt={item.name} 
@@ -326,23 +326,23 @@ export default function CustomerMenuPage() {
                                             />
                                         </div>
                                     )}
-                                    <CardHeader className="pb-3">
-                                        <div className="flex justify-between items-start gap-2">
-                                            <CardTitle className="text-lg leading-tight">{item.name}</CardTitle>
-                                            <Badge variant="secondary" className="shrink-0">{formatCurrency(item.price_cents)}</Badge>
+                                    <CardHeader className="p-3 sm:p-6 sm:pb-3">
+                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
+                                            <CardTitle className="text-sm sm:text-lg leading-tight line-clamp-2">{item.name}</CardTitle>
+                                            <Badge variant="secondary" className="shrink-0 w-fit text-xs sm:text-sm">{formatCurrency(item.price_cents)}</Badge>
                                         </div>
                                         {item.category && (
-                                            <div className="mt-1">
+                                            <div className="mt-1 hidden sm:block">
                                                 <Badge variant="outline" className="text-xs font-normal">{item.category}</Badge>
                                             </div>
                                         )}
                                     </CardHeader>
-                                    <CardContent className="flex-1 pb-3">
+                                    <CardContent className="flex-1 p-3 pt-0 sm:p-6 sm:pt-0 sm:pb-3 hidden sm:block">
                                         <p className="text-sm text-muted-foreground line-clamp-3 h-[3.75rem]">{item.description || 'No description available.'}</p>
                                     </CardContent>
-                                    <CardFooter className="pt-0">
-                                        <Button className="w-full" onClick={() => openCustomization(item)}>
-                                            <ShoppingCart className="mr-2 h-4 w-4" /> Add to Order
+                                    <CardFooter className="p-3 pt-0 sm:p-6 sm:pt-0 mt-auto">
+                                        <Button className="w-full h-8 text-xs sm:h-10 sm:text-sm" size="sm" onClick={() => openCustomization(item)}>
+                                            <ShoppingCart className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> <span className="inline">Add</span>
                                         </Button>
                                     </CardFooter>
                                 </Card>

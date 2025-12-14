@@ -533,7 +533,7 @@ export default function MenuIndex() {
                                             ))}
                                             {modifierGroups.length === 0 && (
                                                 <p className="text-sm text-muted-foreground col-span-2">No modifier groups available.</p>
-                                            ))}
+                                            )}
                                         </div>
                                     </div>
 
