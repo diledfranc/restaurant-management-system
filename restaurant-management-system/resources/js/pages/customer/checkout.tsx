@@ -53,6 +53,38 @@ export default function CustomerCheckoutPage() {
         setErrors({});
         setSuccess(null);
 
+        if (form.payment_method === 'online') {
+            try {
+                const res = await fetch('/checkout/session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-XSRF-TOKEN': document.querySelector('[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                    body: JSON.stringify({ 
+                        cart,
+                        guest_name: form.guest_name,
+                        guest_phone: form.guest_phone,
+                        guest_address: form.guest_address
+                    }),
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.url) {
+                        window.location.href = data.url;
+                        return;
+                    }
+                }
+                setErrors({ general: ['Failed to initiate payment.'] });
+                setSubmitting(false);
+            } catch (err) {
+                setErrors({ general: ['Failed to initiate payment.'] });
+                setSubmitting(false);
+            }
+            return;
+        }
+
         const payload = {
             guest_name: form.guest_name,
             guest_phone: form.guest_phone,
@@ -167,6 +199,7 @@ export default function CustomerCheckoutPage() {
                                     >
                                         <option value="cash">Cash on delivery</option>
                                         <option value="card">Card on delivery</option>
+                                        <option value="online">Online Payment (PromptPay / Credit Card)</option>
                                     </select>
                                 </div>
                                 {errors.general && (

@@ -46,6 +46,11 @@ Route::middleware(['auth'])->group(function () {
         return Inertia::render('customer/orders');
     })->name('customer.orders');
 
+    // Payment Routes
+    Route::post('/checkout/session', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('checkout.session');
+    Route::get('/payment/success', [App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
+    Route::get('/payment/cancel', [App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
+
     // Manager & Staff Operations
     Route::middleware(['role:manager,staff,admin'])->group(function () {
         Route::get('/menu', [MenuItemController::class, 'index'])->name('menu.index');
