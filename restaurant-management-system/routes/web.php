@@ -33,7 +33,7 @@ Route::get('/shop/checkout', function () {
     return Inertia::render('customer/checkout');
 })->name('shop.checkout');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Notifications
