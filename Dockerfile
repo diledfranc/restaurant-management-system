@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.2-cli
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -49,13 +49,5 @@ RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 RUN rm -rf /var/www/html/public/storage
 RUN php artisan storage:link
 
-# Configure Apache DocumentRoot
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# Enable mod_rewrite
-RUN a2enmod rewrite
-
-# Start Apache
-CMD php artisan migrate --force && apache2-foreground
+# Start command (Uses Railway's PORT or defaults to 8000)
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
