@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.2-cli
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -28,7 +28,7 @@ RUN apt-get install -y nodejs
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy application code (Note: We copy the subfolder content to the container root)
+# Copy application code
 COPY restaurant-management-system/ .
 
 # Install PHP dependencies
@@ -38,21 +38,13 @@ RUN composer install --no-dev --optimize-autoloader
 RUN npm install
 RUN npm run build
 
-# Set permissions for Laravel
+# Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Create storage link (Remove existing if present to avoid error)
+# Create storage link
 RUN rm -rf /var/www/html/public/storage
 RUN php artisan storage:link
 
-# Configure Apache DocumentRoot to point to public folder
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
-# Expose port 80
-EXPOSE 80
+# Start command (Uses Railway's PORT or defaults to 8000)
+CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
