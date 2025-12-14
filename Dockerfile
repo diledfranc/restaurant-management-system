@@ -49,5 +49,5 @@ RUN php artisan storage:link
 # Clear any potential config cache from build
 RUN php artisan optimize:clear
 
-# Start command (Uses Railway's PORT or defaults to 8000)
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+# Run migrations and start the server
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
