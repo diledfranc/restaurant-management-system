@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, UtensilsCrossed, ShoppingCart, FileText, Truck, Users, Calendar, Home, User, Settings, Monitor, Calculator, Sliders, Package } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, UtensilsCrossed, ShoppingCart, FileText, Truck, Users, Calendar, Home, User, Settings, Monitor, Calculator, Sliders, Package, Table as TableIcon } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const customerNavItems: NavItem[] = [
@@ -66,6 +66,7 @@ export function AppSidebar() {
                 { title: 'Activity Logs', href: '/logs', icon: FileText },
                 { title: 'Modifiers', href: '/modifiers', icon: Sliders },
                 { title: 'Inventory', href: '/inventory', icon: Package },
+                { title: 'Tables', href: '/tables', icon: TableIcon },
                 { title: 'Settings', href: '/settings', icon: Settings },
             ];
         }
@@ -80,6 +81,7 @@ export function AppSidebar() {
                 { title: 'Reports', href: '/reports', icon: FileText },
                 { title: 'Delivery', href: '/delivery', icon: Truck },
                 { title: 'Reservations', href: '/reservations', icon: Calendar },
+                { title: 'Tables', href: '/tables', icon: TableIcon },
             ];
         }
 

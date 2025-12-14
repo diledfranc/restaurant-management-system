@@ -43,3 +43,13 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface Table {
+    id: number;
+    table_number: string;
+    capacity: number;
+    status: 'available' | 'occupied' | 'reserved' | 'dirty';
+    position_x: number;
+    position_y: number;
+    shape: 'square' | 'round' | 'rectangle';
+}

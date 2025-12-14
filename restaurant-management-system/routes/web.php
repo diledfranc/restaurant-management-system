@@ -47,7 +47,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('customer.orders');
 
     // Manager & Staff Operations
-    Route::middleware(['role:manager,staff'])->group(function () {
+    Route::middleware(['role:manager,staff,admin'])->group(function () {
         Route::get('/menu', [MenuItemController::class, 'index'])->name('menu.index');
         
         // Modifiers
@@ -77,6 +77,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/reservations', [App\Http\Controllers\ReservationController::class, 'store'])->name('reservations.store');
         Route::put('/reservations/{reservation}', [App\Http\Controllers\ReservationController::class, 'update'])->name('reservations.update');
         Route::delete('/reservations/{reservation}', [App\Http\Controllers\ReservationController::class, 'destroy'])->name('reservations.destroy');
+
+        // Tables
+        Route::get('/tables', [App\Http\Controllers\TableController::class, 'index'])->name('tables.index');
+        Route::post('/tables', [App\Http\Controllers\TableController::class, 'store'])->name('tables.store');
+        Route::put('/tables/{table}', [App\Http\Controllers\TableController::class, 'update'])->name('tables.update');
+        Route::patch('/tables/{table}/position', [App\Http\Controllers\TableController::class, 'updatePosition'])->name('tables.position');
+        Route::delete('/tables/{table}', [App\Http\Controllers\TableController::class, 'destroy'])->name('tables.destroy');
     });
 
     // POS & Kitchen
