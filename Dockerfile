@@ -53,4 +53,4 @@ RUN php artisan storage:link
 RUN rm -f /var/www/html/public/hot
 
 # Start command (Uses Railway's PORT or defaults to 8000)
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+CMD php artisan migrate --force && php artisan tinker --execute="if(App\Models\MenuCategory::count() === 0) { Artisan::call('db:seed', ['--force' => true]); }" && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
