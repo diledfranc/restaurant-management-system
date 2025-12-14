@@ -229,6 +229,11 @@ class OrderController extends Controller
             'ip' => $request->ip(),
         ]);
 
+        // Notify user if order belongs to a registered user
+        if ($order->user) {
+            $order->user->notify(new \App\Notifications\OrderStatusUpdated($order));
+        }
+
         // Optionally create/attach a delivery record when status moves to on_way
         if ($order->status === 'on_way') {
             $delivery = $order->delivery()->firstOrCreate([

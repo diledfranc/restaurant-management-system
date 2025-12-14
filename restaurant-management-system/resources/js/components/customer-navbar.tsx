@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
-import { UtensilsCrossed, User, ShoppingBag, LogOut, Menu, Globe } from 'lucide-react';
+import { UtensilsCrossed, User, ShoppingBag, LogOut, Menu, Globe, Bell } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import { type SharedData } from '@/types';
@@ -40,6 +40,37 @@ export default function CustomerNavbar({ children, cartCount = 0, onCartClick }:
     const { auth } = usePage<SharedData>().props;
     const [showLoginDialog, setShowLoginDialog] = useState(false);
     const [language, setLanguage] = useState<'en' | 'th'>('en');
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [loadingNotifications, setLoadingNotifications] = useState(false);
+
+    const fetchNotifications = async () => {
+        setLoadingNotifications(true);
+        try {
+            const res = await fetch('/notifications');
+            if (res.ok) {
+                const data = await res.json();
+                setNotifications(data);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoadingNotifications(false);
+        }
+    };
+
+    const markAsRead = async (id: string) => {
+        try {
+            await fetch(`/notifications/${id}/read`, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || ''
+                }
+            });
+            setNotifications(notifications.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n));
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     const handleAuthAction = (e: React.MouseEvent, href: string) => {
         if (!auth.user) {
@@ -119,6 +150,46 @@ export default function CustomerNavbar({ children, cartCount = 0, onCartClick }:
                             <span className="hidden sm:inline">{language.toUpperCase()}</span>
                             <span className="sm:hidden">{language.toUpperCase()}</span>
                         </Button>
+
+                        {/* Notifications */}
+                        {auth.user && (
+                            <DropdownMenu onOpenChange={(open) => {
+                                if (open) fetchNotifications();
+                            }}>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="relative">
+                                        <Bell className="h-5 w-5" />
+                                        {auth.unreadNotificationsCount > 0 && (
+                                            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-600" />
+                                        )}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-80">
+                                    <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <div className="max-h-96 overflow-y-auto">
+                                        {loadingNotifications ? (
+                                            <div className="p-4 text-center text-sm text-muted-foreground">Loading...</div>
+                                        ) : notifications.length === 0 ? (
+                                            <div className="p-4 text-center text-sm text-muted-foreground">No notifications</div>
+                                        ) : (
+                                            notifications.map((notification) => (
+                                                <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-3 cursor-pointer" onClick={() => markAsRead(notification.id)}>
+                                                    <div className="flex justify-between w-full">
+                                                        <span className={`font-medium ${!notification.read_at ? 'text-primary' : ''}`}>
+                                                            {notification.data.message}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-xs text-muted-foreground mt-1">
+                                                        {new Date(notification.created_at).toLocaleString()}
+                                                    </span>
+                                                </DropdownMenuItem>
+                                            ))
+                                        )}
+                                    </div>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
 
                         <AppearanceToggleDropdown />
                         

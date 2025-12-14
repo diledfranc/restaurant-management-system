@@ -3,6 +3,8 @@ import { LucideIcon } from 'lucide-react';
 
 export interface Auth {
     user: User;
+    roles: string[];
+    unreadNotificationsCount: number;
 }
 
 export interface BreadcrumbItem {
