@@ -102,7 +102,7 @@ class DashboardController extends Controller
         $categorySales = DB::table('order_items')
             ->join('menu_items', 'order_items.menu_item_id', '=', 'menu_items.id')
             ->join('menu_categories', 'menu_items.category_id', '=', 'menu_categories.id')
-            ->select('menu_categories.name', DB::raw('sum(order_items.quantity * order_items.price_cents) as total'))
+            ->select('menu_categories.name', DB::raw('sum(order_items.total_price_cents) as total'))
             ->groupBy('menu_categories.name')
             ->get()
             ->map(function ($item) {
