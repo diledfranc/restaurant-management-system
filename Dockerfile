@@ -49,5 +49,8 @@ RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 RUN rm -rf /var/www/html/public/storage
 RUN php artisan storage:link
 
+# Remove hot file if it exists (Fixes blank screen in production)
+RUN rm -f /var/www/html/public/hot
+
 # Start command (Uses Railway's PORT or defaults to 8000)
 CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
