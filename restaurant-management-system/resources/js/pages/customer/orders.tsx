@@ -115,14 +115,14 @@ export default function CustomerOrders() {
         <CustomerLayout>
             <Head title="My Orders" />
             <div className="container mx-auto p-4 sm:p-8">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">My Orders</h1>
-                        <p className="text-muted-foreground">
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">My Orders</h1>
+                        <p className="text-sm sm:text-base text-muted-foreground">
                             Track your active orders and view history
                         </p>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => fetchOrders(false)} disabled={isRefreshing}>
+                    <Button variant="outline" size="sm" onClick={() => fetchOrders(false)} disabled={isRefreshing} className="w-full sm:w-auto">
                         <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
                         Refresh
                     </Button>
@@ -134,14 +134,14 @@ export default function CustomerOrders() {
                     </div>
                 ) : (
                     <Tabs defaultValue="active" className="space-y-6">
-                        <TabsList>
-                            <TabsTrigger value="active">Active Orders ({activeOrders.length})</TabsTrigger>
-                            <TabsTrigger value="history">Order History</TabsTrigger>
+                        <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:inline-flex">
+                            <TabsTrigger value="active">Active ({activeOrders.length})</TabsTrigger>
+                            <TabsTrigger value="history">History</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="active" className="space-y-4">
                             {activeOrders.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-64 border rounded-xl bg-muted/10 text-muted-foreground">
+                                <div className="flex flex-col items-center justify-center h-64 border rounded-xl bg-muted/10 text-muted-foreground p-4 text-center">
                                     <Package className="h-12 w-12 mb-4 opacity-20" />
                                     <p>No active orders at the moment.</p>
                                     <Button variant="link" onClick={() => router.visit('/shop')}>
@@ -149,7 +149,7 @@ export default function CustomerOrders() {
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                                     {activeOrders.map((order) => (
                                         <OrderCard key={order.id} order={order} />
                                     ))}
@@ -161,7 +161,7 @@ export default function CustomerOrders() {
                             {pastOrders.length === 0 ? (
                                 <div className="text-center py-10 text-muted-foreground">No order history found.</div>
                             ) : (
-                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                                     {pastOrders.map((order) => (
                                         <OrderCard key={order.id} order={order} onReorder={() => handleReorder(order)} />
                                     ))}

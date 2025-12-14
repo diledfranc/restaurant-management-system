@@ -106,49 +106,54 @@ export default function CartPage() {
             <Head title="Your Cart" />
             
             <div className="container mx-auto max-w-4xl p-4 sm:p-8">
-                <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
-                    <ShoppingCart className="h-8 w-8" />
+                <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 flex items-center gap-3">
+                    <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8" />
                     Your Cart
                 </h1>
 
                 {cart.length === 0 ? (
-                    <Card className="text-center py-16">
+                    <Card className="text-center py-12 sm:py-16">
                         <CardContent>
-                            <div className="bg-muted/50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <ShoppingCart className="h-10 w-10 text-muted-foreground" />
+                            <div className="bg-muted/50 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                                <ShoppingCart className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
                             </div>
-                            <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
-                            <p className="text-muted-foreground mb-8">Looks like you haven't added anything to your cart yet.</p>
+                            <h2 className="text-lg sm:text-xl font-semibold mb-2">Your cart is empty</h2>
+                            <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8">Looks like you haven't added anything to your cart yet.</p>
                             <Link href="/shop">
-                                <Button size="lg">
+                                <Button size="lg" className="w-full sm:w-auto">
                                     Browse Menu
                                 </Button>
                             </Link>
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+                    <div className="grid gap-6 sm:gap-8 lg:grid-cols-[1fr_320px]">
                         <div className="space-y-4">
                             <Card>
-                                <CardHeader>
-                                    <CardTitle>Order Items ({cart.length})</CardTitle>
+                                <CardHeader className="p-4 sm:p-6">
+                                    <CardTitle className="text-lg sm:text-xl">Order Items ({cart.length})</CardTitle>
                                 </CardHeader>
-                                <CardContent className="divide-y">
+                                <CardContent className="divide-y p-0 sm:p-6 sm:pt-0">
                                     {cart.map((item) => (
-                                        <div key={item.cartId} className="py-4 flex items-center justify-between gap-4">
+                                        <div key={item.cartId} className="p-4 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                             <div className="flex-1">
-                                                <h3 className="font-medium text-lg">{item.name}</h3>
+                                                <div className="flex justify-between items-start">
+                                                    <h3 className="font-medium text-base sm:text-lg">{item.name}</h3>
+                                                    <div className="font-bold sm:hidden">
+                                                        {formatCurrency(item.price_cents * item.quantity)}
+                                                    </div>
+                                                </div>
                                                 {item.modifiers && item.modifiers.length > 0 && (
-                                                    <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
+                                                    <div className="text-xs sm:text-sm text-muted-foreground mt-1 space-y-0.5">
                                                         {item.modifiers.map((mod, i) => (
                                                             <div key={i}>+ {mod.option_name} ({formatCurrency(mod.price_cents)})</div>
                                                         ))}
                                                     </div>
                                                 )}
-                                                <p className="text-muted-foreground mt-1">{formatCurrency(item.price_cents)} each</p>
+                                                <p className="text-xs sm:text-sm text-muted-foreground mt-1">{formatCurrency(item.price_cents)} each</p>
                                             </div>
                                             
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center justify-between sm:justify-end gap-3 mt-2 sm:mt-0">
                                                 <div className="flex items-center border rounded-md">
                                                     <Button 
                                                         variant="ghost" 
@@ -168,18 +173,20 @@ export default function CartPage() {
                                                         <Plus className="h-3 w-3" />
                                                     </Button>
                                                 </div>
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    className="text-destructive"
-                                                    onClick={() => removeItem(item.cartId)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                            
-                                            <div className="text-right font-bold min-w-[80px]">
-                                                {formatCurrency(item.price_cents * item.quantity)}
+                                                
+                                                <div className="flex items-center gap-3">
+                                                    <div className="text-right font-bold min-w-[80px] hidden sm:block">
+                                                        {formatCurrency(item.price_cents * item.quantity)}
+                                                    </div>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        className="text-destructive h-8 w-8"
+                                                        onClick={() => removeItem(item.cartId)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
