@@ -57,8 +57,5 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 # Enable mod_rewrite
 RUN a2enmod rewrite
 
-# Clear cache
-RUN php artisan optimize:clear
-
 # Start Apache
 CMD php artisan migrate --force && apache2-foreground
