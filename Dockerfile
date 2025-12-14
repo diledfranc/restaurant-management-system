@@ -46,5 +46,8 @@ RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 RUN rm -rf /var/www/html/public/storage
 RUN php artisan storage:link
 
+# Clear any potential config cache from build
+RUN php artisan optimize:clear
+
 # Start command (Uses Railway's PORT or defaults to 8000)
 CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
