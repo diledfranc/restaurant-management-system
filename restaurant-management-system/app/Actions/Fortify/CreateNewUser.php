@@ -24,11 +24,17 @@ class CreateNewUser implements CreatesNewUsers
             'email' => [
                 'required',
                 'string',
-                'email',
+                'email:rfc,dns', // Enforce RFC compliance and DNS check
                 'max:255',
                 Rule::unique(User::class),
             ],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => [
+                'required', 
+                'string', 
+                'min:10', 
+                'max:20',
+                'regex:/^(\+)?[0-9\s\-\(\)]+$/' // Allow +, digits, spaces, dashes, parens
+            ],
             'password' => $this->passwordRules(),
         ])->validate();
 
