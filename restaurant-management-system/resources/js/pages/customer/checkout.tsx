@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
+import { SharedData } from '@/types';
 
 interface CartLine {
     cartId: string;
@@ -25,10 +26,11 @@ const CART_KEY = 'customer_cart';
 const formatCurrency = (cents: number) => `฿${(cents / 100).toFixed(2)}`;
 
 export default function CustomerCheckoutPage() {
+    const { auth } = usePage<SharedData>().props;
     const [cart, setCart] = useState<CartLine[]>([]);
     const [form, setForm] = useState({
-        guest_name: '',
-        guest_phone: '',
+        guest_name: auth.user?.name || '',
+        guest_phone: auth.user?.phone || '',
         guest_address: '',
         payment_method: 'cash',
         order_type: 'delivery',
