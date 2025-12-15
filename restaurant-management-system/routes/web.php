@@ -1,5 +1,16 @@
 <?php
 
+use Illuminate\Support\Facades\Artisan;
+
+Route::get('/seed-cafe-menu', function () {
+    try {
+        Artisan::call('db:seed', ['--class' => 'CafeMenuSeeder', '--force' => true]);
+        return 'Cafe Menu Seeded Successfully!';
+    } catch (\Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+});
+
 use App\Http\Controllers\MenuItemController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\DeliveryController;
