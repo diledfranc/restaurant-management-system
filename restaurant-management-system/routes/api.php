@@ -38,7 +38,7 @@ Route::middleware(['auth', 'web'])->group(function () {
 });
 
 // Orders
-Route::post('/orders', [OrderController::class, 'store']); // guest allowed
+Route::middleware('web')->post('/orders', [OrderController::class, 'store']); // guest allowed, but uses session if logged in
 Route::middleware(['auth', 'web'])->group(function () {
     Route::get('/orders', [OrderController::class, 'index']); // staff/manager filtered by role
     Route::get('/orders/{order}', [OrderController::class, 'show']);
