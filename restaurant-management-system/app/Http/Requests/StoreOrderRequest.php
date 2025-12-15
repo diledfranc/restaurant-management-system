@@ -25,9 +25,10 @@ class StoreOrderRequest extends FormRequest
             'cart.*.modifiers.*.modifier_id' => 'required|exists:modifiers,id',
             'user_id' => 'nullable|exists:users,id',
             'guest_name' => 'required_without:user_id|string|max:191',
-            'guest_phone' => 'required_without:user_id|string|max:20',
-            'guest_address' => 'required_without:user_id|string|max:1000',
-            'payment_method' => 'required|in:cash,transfer',
+            'guest_phone' => ['required_without:user_id', 'string', 'regex:/^0[0-9]{9}$/'],
+            'guest_address' => 'required_if:order_type,delivery|nullable|string|max:1000',
+            'payment_method' => 'required|in:cash,transfer,card,online',
+            'order_type' => 'required|in:delivery,pickup,dine_in',
         ];
     }
 

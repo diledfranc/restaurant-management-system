@@ -31,6 +31,7 @@ export default function CustomerCheckoutPage() {
         guest_phone: '',
         guest_address: '',
         payment_method: 'cash',
+        order_type: 'delivery',
     });
     const [errors, setErrors] = useState<Record<string, string[]>>({});
     const [submitting, setSubmitting] = useState(false);
@@ -65,7 +66,8 @@ export default function CustomerCheckoutPage() {
                         cart,
                         guest_name: form.guest_name,
                         guest_phone: form.guest_phone,
-                        guest_address: form.guest_address
+                        guest_address: form.guest_address,
+                        order_type: form.order_type
                     }),
                 });
                 
@@ -88,8 +90,9 @@ export default function CustomerCheckoutPage() {
         const payload = {
             guest_name: form.guest_name,
             guest_phone: form.guest_phone,
-            guest_address: form.guest_address,
+            guest_address: form.order_type === 'pickup' ? '' : form.guest_address,
             payment_method: form.payment_method,
+            order_type: form.order_type,
             cart: cart.map((line) => ({
                 menu_item_id: line.id,
                 quantity: line.quantity,
@@ -162,6 +165,28 @@ export default function CustomerCheckoutPage() {
                         <form onSubmit={handleSubmit}>
                             <CardContent className="space-y-3">
                                 <div className="space-y-1">
+                                    <Label>Order Type</Label>
+                                    <div className="flex gap-2">
+                                        <Button 
+                                            type="button" 
+                                            variant={form.order_type === 'delivery' ? 'default' : 'outline'}
+                                            onClick={() => setForm({ ...form, order_type: 'delivery', payment_method: 'cash' })}
+                                            className="flex-1"
+                                        >
+                                            Delivery
+                                        </Button>
+                                        <Button 
+                                            type="button" 
+                                            variant={form.order_type === 'pickup' ? 'default' : 'outline'}
+                                            onClick={() => setForm({ ...form, order_type: 'pickup', payment_method: 'cash' })}
+                                            className="flex-1"
+                                        >
+                                            Pickup
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
                                     <Label htmlFor="guest_name">Name</Label>
                                     <Input id="guest_name" value={form.guest_name} onChange={updateField('guest_name')} required />
                                     {errors.guest_name && (
@@ -170,25 +195,36 @@ export default function CustomerCheckoutPage() {
                                 </div>
                                 <div className="space-y-1">
                                     <Label htmlFor="guest_phone">Phone</Label>
-                                    <Input id="guest_phone" value={form.guest_phone} onChange={updateField('guest_phone')} required />
+                                    <Input 
+                                        id="guest_phone" 
+                                        type="tel"
+                                        placeholder="0812345678"
+                                        value={form.guest_phone} 
+                                        onChange={updateField('guest_phone')} 
+                                        required 
+                                    />
                                     {errors.guest_phone && (
                                         <p className="text-xs text-destructive">{errors.guest_phone[0]}</p>
                                     )}
                                 </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="guest_address">Address</Label>
-                                    <textarea
-                                        id="guest_address"
-                                        value={form.guest_address}
-                                        onChange={updateField('guest_address')}
-                                        rows={3}
-                                        required
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    />
-                                    {errors.guest_address && (
-                                        <p className="text-xs text-destructive">{errors.guest_address[0]}</p>
-                                    )}
-                                </div>
+                                
+                                {form.order_type === 'delivery' && (
+                                    <div className="space-y-1">
+                                        <Label htmlFor="guest_address">Address</Label>
+                                        <textarea
+                                            id="guest_address"
+                                            value={form.guest_address}
+                                            onChange={updateField('guest_address')}
+                                            rows={3}
+                                            required
+                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        />
+                                        {errors.guest_address && (
+                                            <p className="text-xs text-destructive">{errors.guest_address[0]}</p>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className="space-y-1">
                                     <Label htmlFor="payment_method">Payment method</Label>
                                     <select
@@ -197,9 +233,18 @@ export default function CustomerCheckoutPage() {
                                         value={form.payment_method}
                                         onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
                                     >
-                                        <option value="cash">Cash on delivery</option>
-                                        <option value="card">Card on delivery</option>
-                                        <option value="online">Online Payment (PromptPay / Credit Card)</option>
+                                        {form.order_type === 'delivery' ? (
+                                            <>
+                                                <option value="cash">Cash on delivery</option>
+                                                <option value="card">Card on delivery</option>
+                                                <option value="online">Online Payment (PromptPay / Credit Card)</option>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <option value="cash">Pay In-Store (Cash/Card)</option>
+                                                <option value="online">Online Payment (PromptPay / Credit Card)</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
                                 {errors.general && (

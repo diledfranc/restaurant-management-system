@@ -111,9 +111,10 @@ class OrderController extends Controller
                 'user_id' => $data['user_id'] ?? ($user?->id),
                 'guest_name' => $data['guest_name'] ?? null,
                 'guest_phone' => $data['guest_phone'],
-                'guest_address' => $data['guest_address'],
+                'guest_address' => $data['guest_address'] ?? '',
                 'total_cents' => $total,
                 'payment_method' => $data['payment_method'],
+                'order_type' => $data['order_type'] ?? 'delivery',
                 'status' => 'placed',
             ]);
 
