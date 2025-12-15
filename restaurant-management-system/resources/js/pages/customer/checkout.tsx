@@ -105,6 +105,7 @@ export default function CustomerCheckoutPage() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-XSRF-TOKEN': document.querySelector('[name="csrf-token"]')?.getAttribute('content') || '',
                 },
                 body: JSON.stringify(payload),
