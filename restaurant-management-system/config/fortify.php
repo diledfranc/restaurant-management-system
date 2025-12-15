@@ -17,6 +17,8 @@ return [
 
     'guard' => 'web',
 
+    'require_email_verification' => env('REQUIRE_EMAIL_VERIFICATION', true),
+
     /*
     |--------------------------------------------------------------------------
     | Fortify Password Broker
