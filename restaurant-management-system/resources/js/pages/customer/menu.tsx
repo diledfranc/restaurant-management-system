@@ -175,11 +175,19 @@ export default function CustomerMenuPage() {
             // Calculate base price + modifiers
             const modifiersTotal = modifiers.reduce((sum, m) => sum + m.price_cents, 0);
             
+            // Generate a random ID (fallback for environments without crypto.randomUUID)
+            const generateId = () => {
+                if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                    return crypto.randomUUID();
+                }
+                return Date.now().toString(36) + Math.random().toString(36).substring(2);
+            };
+
             return [...prev, { 
-                cartId: crypto.randomUUID(),
+                cartId: generateId(),
                 id: item.id, 
                 name: item.name, 
-                price_cents: item.price_cents + modifiersTotal, 
+                price_cents: Number(item.price_cents) + modifiersTotal, 
                 quantity: 1,
                 modifiers 
             }];
