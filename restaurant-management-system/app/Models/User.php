@@ -69,4 +69,17 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->roles()->first();
     }
+
+    /**
+     * Send the email verification notification.
+     *
+     * @return void
+     */
+    public function sendEmailVerificationNotification()
+    {
+        // Only send if the configuration requires it
+        if (config('fortify.require_email_verification')) {
+            parent::sendEmailVerificationNotification();
+        }
+    }
 }
