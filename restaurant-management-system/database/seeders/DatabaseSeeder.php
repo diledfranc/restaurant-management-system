@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             RolesSeeder::class,
             UsersSeeder::class,
             DemoSeeder::class,
+            CafeMenuSeeder::class,
         ]);
 
         // Example test user (kept for local testing)
