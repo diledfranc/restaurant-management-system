@@ -13,7 +13,8 @@ class MenuItemController extends Controller
 {
     public function index(Request $request)
     {
-        $query = MenuItem::with(['category', 'modifierGroups', 'ingredients']);
+        // Eager load modifierGroups AND their modifiers
+        $query = MenuItem::with(['category', 'modifierGroups.modifiers', 'ingredients']);
 
         if ($request->filled('category')) {
             $category = $request->category;
