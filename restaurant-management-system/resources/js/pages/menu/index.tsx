@@ -458,7 +458,7 @@ export default function MenuIndex() {
                                         {errors.description && <InputError message={errors.description} />}
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="price_cents">Price ($) *</Label>
+                                        <Label htmlFor="price_cents">Price (฿) *</Label>
                                         <Input
                                             id="price_cents"
                                             type="number"
