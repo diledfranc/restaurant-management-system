@@ -73,7 +73,8 @@ export default function CustomerMenuPage() {
         if (typeof window === 'undefined') return [];
         try {
             const stored = localStorage.getItem(CART_KEY);
-            return stored ? JSON.parse(stored) : [];
+            const parsed = stored ? JSON.parse(stored) : [];
+            return Array.isArray(parsed) ? parsed : [];
         } catch (e) {
             console.error('Failed to parse cart from localStorage', e);
             return [];
@@ -164,22 +165,28 @@ export default function CustomerMenuPage() {
     };
 
     const addItemToCart = (item: MenuItem, modifiers: CartLine['modifiers']) => {
+        if (!item) return;
+        
         setCart((prev) => {
+            // Ensure prev is an array
+            const currentCart = Array.isArray(prev) ? prev : [];
+            
             // Check for identical item (same ID and same modifiers)
             // This is a simple check, might need more robust comparison for complex modifiers
-            const existingIndex = prev.findIndex((line) => 
+            const existingIndex = currentCart.findIndex((line) => 
                 line.id === item.id && 
                 JSON.stringify(line.modifiers) === JSON.stringify(modifiers)
             );
 
             if (existingIndex >= 0) {
-                const newCart = [...prev];
+                const newCart = [...currentCart];
                 newCart[existingIndex].quantity += 1;
                 return newCart;
             }
             
             // Calculate base price + modifiers
-            const modifiersTotal = modifiers.reduce((sum, m) => sum + m.price_cents, 0);
+            const safeModifiers = Array.isArray(modifiers) ? modifiers : [];
+            const modifiersTotal = safeModifiers.reduce((sum, m) => sum + (Number(m.price_cents) || 0), 0);
             
             // Generate a random ID (fallback for environments without crypto.randomUUID)
             const generateId = () => {
@@ -193,13 +200,13 @@ export default function CustomerMenuPage() {
                 return Date.now().toString(36) + Math.random().toString(36).substring(2);
             };
 
-            return [...prev, { 
+            return [...currentCart, { 
                 cartId: generateId(),
                 id: item.id, 
                 name: item.name, 
-                price_cents: Number(item.price_cents) + modifiersTotal, 
+                price_cents: (Number(item.price_cents) || 0) + modifiersTotal, 
                 quantity: 1,
-                modifiers 
+                modifiers: safeModifiers 
             }];
         });
         setCustomizingItem(null);
