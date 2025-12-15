@@ -70,8 +70,14 @@ export default function CustomerMenuPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [cart, setCart] = useState<CartLine[]>(() => {
-        const stored = localStorage.getItem(CART_KEY);
-        return stored ? JSON.parse(stored) : [];
+        if (typeof window === 'undefined') return [];
+        try {
+            const stored = localStorage.getItem(CART_KEY);
+            return stored ? JSON.parse(stored) : [];
+        } catch (e) {
+            console.error('Failed to parse cart from localStorage', e);
+            return [];
+        }
     });
     const [search, setSearch] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
@@ -177,8 +183,12 @@ export default function CustomerMenuPage() {
             
             // Generate a random ID (fallback for environments without crypto.randomUUID)
             const generateId = () => {
-                if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-                    return crypto.randomUUID();
+                try {
+                    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                        return crypto.randomUUID();
+                    }
+                } catch (e) {
+                    // Ignore error and fallback
                 }
                 return Date.now().toString(36) + Math.random().toString(36).substring(2);
             };
