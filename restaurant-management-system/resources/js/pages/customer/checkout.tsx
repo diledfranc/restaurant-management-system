@@ -116,11 +116,15 @@ export default function CustomerCheckoutPage() {
                 localStorage.removeItem(CART_KEY);
             } else if (res.status === 422) {
                 const data = await res.json();
+                console.error('Validation errors:', data);
                 setErrors(data.errors || {});
             } else {
+                const errorText = await res.text();
+                console.error('Order placement failed:', res.status, errorText);
                 setErrors({ general: ['Failed to place order. Please try again.'] });
             }
         } catch (err) {
+            console.error('Network error:', err);
             setErrors({ general: ['Failed to place order. Please try again.'] });
         } finally {
             setSubmitting(false);
