@@ -4,6 +4,7 @@ import { ArrowRight, UtensilsCrossed, ChefHat, Star } from 'lucide-react';
 import { type SharedData } from '@/types';
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import * as shop from '@/routes/shop';
+import * as customer from '@/routes/customer';
 import CustomerNavbar from '@/components/customer-navbar';
 
 export default function Welcome() {
@@ -34,9 +35,9 @@ export default function Welcome() {
                                             Order Now <ArrowRight className="h-4 w-4" />
                                         </Button>
                                     </Link>
-                                    <Link href="/register">
+                                    <Link href={auth.user ? customer.orders().url : '/register'}>
                                         <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                                            Join Rewards
+                                            {auth.user ? 'My Orders' : 'Join Rewards'}
                                         </Button>
                                     </Link>
                                 </div>

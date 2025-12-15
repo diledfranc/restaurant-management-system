@@ -18,6 +18,7 @@ class OrderResource extends JsonResource
                 ] : null;
             }),
             'guest_name' => $this->guest_name,
+            'table_number' => $this->table_number,
             'guest_phone' => $this->guest_phone,
             'guest_address' => $this->guest_address,
             'total_cents' => $this->total_cents,

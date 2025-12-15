@@ -103,6 +103,7 @@ class PosController extends Controller
             $order = Order::create([
                 'user_id' => null, 
                 'guest_name' => $validated['guest_name'] ?? 'Walk-in Customer',
+                'table_number' => $validated['table_number'] ?? null,
                 'total_cents' => $totalCents,
                 'status' => 'placed',
                 'payment_method' => $validated['payment_method'],
