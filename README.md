@@ -2,6 +2,12 @@
 
 A modern, full-stack web application for managing restaurant operations, including digital menus, online ordering, kitchen management, and staff coordination. Built with Laravel 12, React, and Inertia.js.
 
+## 🌐 Live Deployment
+
+**Production URL:** [https://final-project-diledfranc-production.up.railway.app](https://final-project-diledfranc-production.up.railway.app)
+
+*Note: The application is hosted on Railway using Docker containers.*
+
 ## 🚀 Features
 
 -   **Role-Based Access Control (RBAC)**: Secure access for Admins, Managers, Staff, and Customers.
@@ -33,6 +39,68 @@ A modern, full-stack web application for managing restaurant operations, includi
 -   **Platform**: [Railway](https://railway.app)
 -   **Containerization**: Docker (Custom `Dockerfile`)
 -   **CI/CD**: GitHub Actions (optional/manual push)
+
+## 🗄️ Database Schema (ERD)
+
+The application uses a normalized relational database schema.
+
+```mermaid
+erDiagram
+    USERS ||--o{ ORDERS : places
+    USERS }|--|{ ROLES : has
+    
+    MENU_CATEGORIES ||--o{ MENU_ITEMS : contains
+    MENU_CATEGORIES ||--o{ MENU_CATEGORIES : parent_of
+    
+    MENU_ITEMS ||--o{ ORDER_ITEMS : included_in
+    MENU_ITEMS }|--|{ MODIFIER_GROUPS : has_options
+    MENU_ITEMS }|--|{ INGREDIENTS : made_of
+    
+    MODIFIER_GROUPS ||--|{ MODIFIERS : contains
+    MODIFIERS ||--o{ ORDER_ITEM_MODIFIERS : selected_as
+    MODIFIERS }|--|{ INGREDIENTS : consumes
+    
+    ORDERS ||--|{ ORDER_ITEMS : contains
+    ORDER_ITEMS ||--o{ ORDER_ITEM_MODIFIERS : has_customization
+```
+
+## 👥 Roles & Permissions
+
+| Role | Description | Key Permissions |
+| :--- | :--- | :--- |
+| **Admin** | System Administrator | Full access to all modules, User Management, Settings, Reports. |
+| **Manager** | Restaurant Manager | Menu Management, Inventory, Staff Management, Sales Reports. |
+| **Staff** | Waitstaff / Cashier | POS System, Order Management, Table Management. |
+| **Kitchen** | Kitchen Staff | Kitchen Display System (KDS), Order Status Updates. |
+| **Customer** | End User | Browse Menu, Place Orders, View Order History. |
+
+## 🔌 API Endpoints & Routes
+
+Since this is an **Inertia.js** application, it uses standard web routes that return JSON props to React components.
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| **Auth** | | |
+| `POST` | `/login` | Authenticate user |
+| `POST` | `/register` | Register new customer |
+| `POST` | `/logout` | End session |
+| **Menu** | | |
+| `GET` | `/api/menu` | Fetch paginated menu items |
+| `GET` | `/api/categories` | Fetch menu categories |
+| **Orders** | | |
+| `POST` | `/checkout` | Submit a new order |
+| `GET` | `/customer/orders` | View order history |
+| **Admin** | | |
+| `GET` | `/dashboard` | Admin analytics dashboard |
+| `GET` | `/orders` | Manage all orders |
+| `GET` | `/inventory` | Manage ingredients & stock |
+
+## ⚠️ Known Limitations
+
+### Email Sending (Resend)
+The application uses the **Resend** service for transactional emails.
+*   **Limitation:** Currently running on the **Free Tier (Sandbox Mode)**.
+*   **Impact:** Emails can **only** be sent to the verified administrator email address (`adelaidefrancis7@gmail.com`). Registration with other email addresses will fail with an API error unless the domain is verified.
 
 ## 📋 Prerequisites
 
@@ -128,6 +196,7 @@ Ensure the following variables are set in your Railway project:
 | `REVERB_HOST` | `0.0.0.0` |
 | `REVERB_PORT` | `8080` (or your configured port) |
 | `REVERB_SCHEME` | `https` |
+| `REQUIRE_EMAIL_VERIFICATION` | `true` (Set to `false` to disable verification) |
 
 ### Deployment Steps
 1.  Connect your GitHub repo to Railway.
